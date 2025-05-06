@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+container_name='boilerplate-db'
+
+if ! docker ps -f "name=$container_name" | grep "$container_name" >/dev/null; then
+    docker compose up -d || exit $?
+fi
+
+# Function to handle SIGINT (Ctrl+C)
+function handle_sigint() {
+    pkill wgo
+    pkill go
+    exit 0
+}
+
+# Set the trap for SIGINT
+trap handle_sigint SIGINT
+
+wgo -file '\.templ$' templ generate &
+wgo -file '\.sql$' sqlc generate &
+wgo -file .go go run .

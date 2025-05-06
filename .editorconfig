@@ -1,0 +1,12 @@
+[*.go]
+indent_size = 4
+indent_style = tab
+
+[*.md]
+indent_size = 4
+indent_style = space
+
+[*.templ]
+indent_size = 2
+indent_style = tab
+

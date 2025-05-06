@@ -1,0 +1,16 @@
+services:
+  postgres:
+    container_name: boilerplate-db
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5435:5432" # Map TCP port 5432 on the host to 5432 in the container
+
+volumes:
+  pgdata:
+    driver: local
