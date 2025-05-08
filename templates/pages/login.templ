@@ -54,17 +54,18 @@ templ LoginPage() {
             <h3 class="login-title text-center">Welcome</h3>
             <form
                 id="login-form"
-                hx-post="/login"
-                hx-target="#response"
+                hx-post="/auth/login"
+                hx-target-error="#response"
                 hx-swap="innerHTML"
+                hx-ext="form-json,response-targets"
                 class="needs-validation"
                 novalidate>
                 <div id="response" class="mb-3"></div>
 
                 <div class="mb-3">
-                    <label class="form-label">Username</label>
-                    <input type="text" name="username" class="form-control" required/>
-                    <div class="invalid-feedback">Please enter a valid username.</div>
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control" required/>
+                    <div class="invalid-feedback">Please enter a valid email.</div>
                 </div>
 
                 <div class="mb-3">
@@ -105,14 +106,14 @@ templ LoginPage() {
 
                 form.addEventListener('htmx:afterSwap', function(evt) {
                     if (evt.detail.target.id === 'response') {
-                        const usernameInput = form.querySelector('[name=username]');
+                        const emailInput = form.querySelector('[name=email]');
                         const passwordInput = form.querySelector('[name=password]');
 
                         if (evt.detail.xhr.status === 401 || evt.detail.xhr.status === 400) {
-                            usernameInput.classList.add('is-invalid');
+                            emailInput.classList.add('is-invalid');
                             passwordInput.classList.add('is-invalid');
-                            if (usernameInput.nextElementSibling) {
-                                usernameInput.nextElementSibling.textContent = "Incorrect username.";
+                            if (emailInput.nextElementSibling) {
+                                emailInput.nextElementSibling.textContent = "Incorrect email.";
                             }
                             if (passwordInput.nextElementSibling) {
                                 passwordInput.nextElementSibling.textContent = "Incorrect password.";

@@ -57,9 +57,10 @@ templ RegisterPage() {
             <h3 class="register-title text-center">Create Account</h3>
             <form
                 id="register-form"
-                hx-post="/register"
-                hx-target="#response"
+                hx-post="/auth/register"
+                hx-target-error="#response"
                 hx-swap="innerHTML"
+                hx-ext="response-targets,form-json"
                 class="needs-validation"
                 novalidate>
                 <div id="response" class="mb-3"></div>
