@@ -1,7 +1,6 @@
 -- +goose Up
--- +goose StatementBegin
 SELECT 'up SQL query';
--- +goose StatementEnd
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE IF NOT EXISTS users (
@@ -12,9 +11,9 @@ CREATE TABLE IF NOT EXISTS users (
     pass_salt bytea NOT NULL,
     role text NOT NULL DEFAULT 'user'
     );
+
 -- +goose Down
--- +goose StatementBegin
 SELECT 'down SQL query';
 
 DROP TABLE IF EXISTS users;
--- +goose StatementEnd
+

@@ -11,11 +11,12 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const addUser = `-- name: AddUser :exec
+const addUser = `-- name: AddUser :one
 insert into users
 (email, username, pass_hash, pass_salt, role)
 values
-($1,$2,$3, $4, $5)
+($1, $2, $3, $4, $5)
+RETURNING id, email, username, pass_hash, pass_salt, role
 `
 
 type AddUserParams struct {
@@ -26,15 +27,24 @@ type AddUserParams struct {
 	Role     string `json:"role"`
 }
 
-func (q *Queries) AddUser(ctx context.Context, arg AddUserParams) error {
-	_, err := q.db.Exec(ctx, addUser,
+func (q *Queries) AddUser(ctx context.Context, arg AddUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, addUser,
 		arg.Email,
 		arg.Username,
 		arg.PassHash,
 		arg.PassSalt,
 		arg.Role,
 	)
-	return err
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Username,
+		&i.PassHash,
+		&i.PassSalt,
+		&i.Role,
+	)
+	return i, err
 }
 
 const deleteUser = `-- name: DeleteUser :exec
