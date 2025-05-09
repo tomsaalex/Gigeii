@@ -1,0 +1,9 @@
+package custalerts
+
+templ component(m *Model) {
+    <div class={"alert", string(m.alertType)} role="alert">
+        for _, msg := range m.msgList {
+            {msg} <br/>
+        }
+    </div>
+}
