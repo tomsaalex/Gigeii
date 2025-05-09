@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 
 	"example.com/repository"
@@ -12,19 +13,30 @@ import (
 	custalerts "example.com/templates/components/alerts"
 	"example.com/templates/pages"
 	"github.com/go-chi/chi/v5"
+
+	"regexp"
 )
 
 type UserHandler struct {
 	userService   *service.UserService
 	jwtUtil       *service.JwtUtil
 	userDTOMapper *UserDTOMapper
+
+	emailRegexp *regexp.Regexp
 }
 
 func NewUserHandler(userService *service.UserService, jwtUtil *service.JwtUtil) *UserHandler {
+	emailRegexp, err := regexp.Compile(".+@.+")
+
+	if err != nil {
+		log.Fatal("Email validation RegExp is invalid")
+	}
+
 	return &UserHandler{
 		userService:   userService,
 		jwtUtil:       jwtUtil,
 		userDTOMapper: &UserDTOMapper{},
+		emailRegexp:   emailRegexp,
 	}
 }
 
@@ -57,9 +69,13 @@ func (h *UserHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	errorsList := make([]string, 0)
 	if userDTO.Email == "" {
 		errorsList = append(errorsList, "Email address is missing.")
+	} else if !h.emailRegexp.MatchString(userDTO.Email) {
+		errorsList = append(errorsList, "Email is not valid.")
 	}
 	if userDTO.Password == "" {
 		errorsList = append(errorsList, "Password is missing.")
+	} else if len(userDTO.Password) < 6 {
+		errorsList = append(errorsList, "Password must contain at least 6 characters.")
 	}
 
 	if len(errorsList) != 0 {
@@ -124,12 +140,16 @@ func (h *UserHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	errorsList := make([]string, 0)
 	if userDTO.Email == "" {
 		errorsList = append(errorsList, "Email is missing.")
+	} else if !h.emailRegexp.MatchString(userDTO.Email) {
+		errorsList = append(errorsList, "Email is not valid.")
 	}
 	if userDTO.Username == "" {
 		errorsList = append(errorsList, "Username is missing.")
 	}
 	if userDTO.Password == "" {
 		errorsList = append(errorsList, "Password is missing.")
+	} else if len(userDTO.Password) < 6 {
+		errorsList = append(errorsList, "Password must contain at least 6 characters.")
 	}
 	if userDTO.ConfirmPassword == "" {
 		errorsList = append(errorsList, "Confirm Password is missing.")
