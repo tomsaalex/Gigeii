@@ -112,10 +112,12 @@ templ editAvailabilityCompBody(vm *ViewModel) {
             <div class="col">
                 <label for="start-date" id="start-date-label" class="form-label">Start Date</label>
                 <input type="date" min={vm.dateToday} class="form-control" id="start-date" name="start_date" required>
+                <div class="invalid-feedback">Please enter a valid upcoming date.</div>
             </div>
             <div class="col">
                 <label for="end-date" id="end-date-label" class="form-label">End Date</label>
                 <input type="date" min={vm.dateToday} class="form-control" id="end-date" name="end_date" required>
+                <div class="invalid-feedback">Please enter a valid date after the start date.</div>
             </div>
         </div>
 
@@ -126,12 +128,17 @@ templ editAvailabilityCompBody(vm *ViewModel) {
                 for i, dayName := range vm.daysOfTheWeek {
                     <input disabled type="checkbox" class="btn-check" id={fmt.Sprintf("day-%d", i)} name="weekdays" value={i} autocomplete="off">
                     <label disabled class="btn btn-custom" for={fmt.Sprintf("day-%d", i)}>{dayName}</label>
+                    <div class="invalid-feedback">You must select at least one day.</div>
                 }
+            </div>
+
+            <div id="weekday-feedback" class="invalid-feedback" style="display: none;">
+                Please select at least one day.
             </div>
         </div>
 
         <!-- Hours of the Day -->
-        <div class="mb-3">
+        <div id="hours-container" class="mb-3">
             <label class="form-label d-block">Hours of the Day</label>
             <div class="container px-0">
                 <div class="row row-cols-6 g-2">
@@ -148,7 +155,72 @@ templ editAvailabilityCompBody(vm *ViewModel) {
                 </div>
             </div>
         </div>
+        <div id="hours-feedback" class="invalid-feedback" style="display: none;">
+            Please select at least one hour.
+        </div>
+
     </form>
+    <script>
+        (() => {
+            document.addEventListener("htmx:beforeRequest", function (event) {
+                const form = event.target.closest("form")
+                if (!form) return
+
+                let valid = true
+
+                // Native browser validation
+                if (!form.checkValidity()) {
+                    valid = false
+                }
+
+                // 🔍 Custom Validation 1: End date after start date
+                const start = form.querySelector("#start-date")
+                const end = form.querySelector("#end-date")
+                if (start && end && !end.disabled) {
+                    const startDate = new Date(start.value)
+                    const endDate = new Date(end.value)
+
+                    if (start.value && end.value && endDate < startDate) {
+                        valid = false
+                        end.setCustomValidity("End date must be after start date.")
+                    } else {
+                        end.setCustomValidity("") // clear if valid
+                    }
+                }
+
+                // 🔍 Custom Validation 2: At least one weekday checked
+                const weekdayGroup = form.querySelector("#week-day-group")
+                if (weekdayGroup && window.getComputedStyle(weekdayGroup).display !== "none") {
+                    const checkboxes = weekdayGroup.querySelectorAll("input[type='checkbox']")
+                    const oneChecked = Array.from(checkboxes).some(cb => cb.checked)
+                    const feedback = document.getElementById("weekday-feedback")
+                    if (!oneChecked) {
+                        valid = false
+                        feedback.style.display = "block"
+                    } else {
+                        feedback.style.display = "none"
+                    }
+                }
+
+                // Custom Validation 3: At least one hour selected
+
+                const hourCheckboxes = document.querySelectorAll("#hours-container input[type='checkbox']")
+                const oneChecked = Array.from(hourCheckboxes).some(cb => cb.checked)
+                const feedback = document.getElementById("hours-feedback")
+                if (!oneChecked) {
+                    valid = false
+                    feedback.style.display = "block"
+                } else {
+                    feedback.style.display = "none"
+                }
+
+                if (!valid) {
+                    event.preventDefault()
+                    form.classList.add("was-validated")
+                }
+            })   
+        })()
+    </script>
 }
 
 templ editAvailabilityCompFooter() {
