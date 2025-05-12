@@ -64,3 +64,43 @@ func (q *Queries) CreateAvailability(ctx context.Context, arg CreateAvailability
 	)
 	return i, err
 }
+
+const getAvailabilitiesByProduct = `-- name: GetAvailabilitiesByProduct :many
+SELECT id, product_id, start_date, end_date, availability_type, days, hours, price, max_participants, precedance, created_by, created_at, updated_at FROM availabilities
+WHERE product_id = $1
+ORDER BY precedance DESC, start_date
+`
+
+func (q *Queries) GetAvailabilitiesByProduct(ctx context.Context, productID int32) ([]Availability, error) {
+	rows, err := q.db.Query(ctx, getAvailabilitiesByProduct, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Availability{}
+	for rows.Next() {
+		var i Availability
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductID,
+			&i.StartDate,
+			&i.EndDate,
+			&i.AvailabilityType,
+			&i.Days,
+			&i.Hours,
+			&i.Price,
+			&i.MaxParticipants,
+			&i.Precedance,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
