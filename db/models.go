@@ -9,8 +9,8 @@ import (
 )
 
 type Availability struct {
-	ID               int32              `json:"id"`
-	ProductID        int32              `json:"product_id"`
+	ID               pgtype.UUID        `json:"id"`
+	ProductID        pgtype.UUID        `json:"product_id"`
 	StartDate        pgtype.Date        `json:"start_date"`
 	EndDate          pgtype.Date        `json:"end_date"`
 	AvailabilityType string             `json:"availability_type"`
@@ -25,7 +25,7 @@ type Availability struct {
 }
 
 type Product struct {
-	ID        int32       `json:"id"`
+	ID        pgtype.UUID `json:"id"`
 	Name      string      `json:"name"`
 	Timezone  string      `json:"timezone"`
 	CreatedBy pgtype.UUID `json:"created_by"`

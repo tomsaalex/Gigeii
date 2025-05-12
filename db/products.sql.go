@@ -30,9 +30,9 @@ type CreateProductParams struct {
 }
 
 type CreateProductRow struct {
-	ID       int32  `json:"id"`
-	Name     string `json:"name"`
-	Timezone string `json:"timezone"`
+	ID       pgtype.UUID `json:"id"`
+	Name     string      `json:"name"`
+	Timezone string      `json:"timezone"`
 }
 
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (CreateProductRow, error) {

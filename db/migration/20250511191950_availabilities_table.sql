@@ -1,7 +1,10 @@
 -- +goose Up
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE IF NOT EXISTS availabilities (
-    id SERIAL PRIMARY KEY,
-    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
 
     -- Period definition
     start_date DATE NOT NULL,
@@ -12,7 +15,7 @@ CREATE TABLE IF NOT EXISTS availabilities (
 
     days INTEGER NOT NULL CHECK (days >= 0 AND days <= 127),            -- 7-bit mask (0=Sun to 6=Sat)
     hours INTEGER NOT NULL CHECK (hours >= 0 AND hours <= 16777215),    -- 24-bit mask (0=00:00 to 23:00)
-    
+
     -- Default config for all generated openings
     price INTEGER NOT NULL CHECK (price >= 0),
     max_participants INTEGER NOT NULL CHECK (max_participants > 0),

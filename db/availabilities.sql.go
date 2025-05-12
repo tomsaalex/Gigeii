@@ -21,7 +21,7 @@ RETURNING id, product_id, start_date, end_date, availability_type, days, hours, 
 `
 
 type CreateAvailabilityParams struct {
-	ProductID        int32       `json:"product_id"`
+	ProductID        pgtype.UUID `json:"product_id"`
 	StartDate        pgtype.Date `json:"start_date"`
 	EndDate          pgtype.Date `json:"end_date"`
 	AvailabilityType string      `json:"availability_type"`
@@ -71,7 +71,7 @@ WHERE product_id = $1
 ORDER BY precedance DESC, start_date
 `
 
-func (q *Queries) GetAvailabilitiesByProduct(ctx context.Context, productID int32) ([]Availability, error) {
+func (q *Queries) GetAvailabilitiesByProduct(ctx context.Context, productID pgtype.UUID) ([]Availability, error) {
 	rows, err := q.db.Query(ctx, getAvailabilitiesByProduct, productID)
 	if err != nil {
 		return nil, err
