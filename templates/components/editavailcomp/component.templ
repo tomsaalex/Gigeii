@@ -1,0 +1,157 @@
+package editavailcomp
+
+import "fmt"
+
+templ editAvailabilityCompBody(vm *ViewModel) {
+    <style>
+        .form-card {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            background: #ffffff;
+            padding: 2rem;
+        }
+        .form-title {
+            color: #333;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        .btn-custom {
+            --bs-btn-font-weight: 600;
+            --bs-btn-color: var(--bs-white);
+            --bs-btn-bg: #6a11cb;
+            --bs-btn-border-color: #6a11cb;
+            --bs-btn-hover-color: var(--bs-white);
+            --bs-btn-hover-bg: #520d99;
+            --bs-btn-hover-border-color: #520d9c;
+            --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
+            --bs-btn-active-color: var(--bs-btn-hover-color);
+            --bs-btn-active-bg: #39096d;
+            --bs-btn-active-border-color: #39096d;
+        }
+        .btn-outline-custom {
+            --bs-btn-font-weight: 600;
+            --bs-btn-color: var(--bs-black);
+            --bs-btn-border-color: #6a11cb;
+            --bs-btn-hover-color: var(--bs-white);
+            --bs-btn-hover-bg: #520d9c;
+            --bs-btn-hover-border-color: #520d9c;
+            --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
+            --bs-btn-active-color: var(--bs-white);
+            --bs-btn-active-bg: #39096d;
+            --bs-btn-active-border-color: #39096d;
+        }
+        .form-control:focus {
+            border-color: #6a11cb;
+            box-shadow: 0 0 0 0.2rem rgba(106, 17, 203, 0.25);
+        }
+        .alert {
+            border-radius: 10px;
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+    </style>
+    <form 
+        id="availability-edit-form"
+        hx-post="/availabilities"
+        hx-target-error="#response"
+        hx-ext="form-json, response-targets"
+        class="needs-validation"
+        novalidate
+        _=" on htmx:afterRequest
+                if detail.xhr.getResponseHeader('Hx-Response-Status') is 'success'
+                    call bootstrap.Modal.getInstance(#modals-here).hide()
+                end"
+    >
+        <div id="response" class="mb-3"></div>
+
+        <!-- Price -->
+        <div class="mb-3">
+            <label for="price" class="form-label">Price</label>
+            <input type="number" min="0" step="0.01" class="form-control" id="price" name="price" required>
+            <div class="invalid-feedback">Please enter a valid price.</div>
+        </div>
+
+        <!-- Maximum Occupancy -->
+        <div class="mb-3">
+            <label for="maxOccupancy" class="form-label">Maximum Occupancy</label>
+            <input type="number" min="1" class="form-control" id="maxOccupancy" name="max_occupancy" required>
+            <div class="invalid-feedback">Please enter a valid number of people.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="" class="form-label">When should the availability apply?</label>
+            <select 
+            class="form-select" 
+            id="type" 
+            name="type" 
+            autocomplete="off"
+            required
+            _="on change 
+            if my value is 'every_day'
+                set #start-date-label's innerText to 'Start Date'
+                add @disabled to <#week-day-group input/> then remove @disabled from #end-date
+                show #end-date-label then show #end-date then hide #week-day-group
+            else if my value is 'fixed_date'
+                set #start-date-label's innerText to 'Date'
+                add @disabled to <#week-day-group input/> then add @disabled to #end-date
+                hide #end-date-label then hide #end-date then hide #week-day-group   
+            else if my value is 'select_days'
+                set #start-date-label's innerText to 'Start Date'
+                remove @disabled from <#week-day-group input/> then remove @disabled from #end-date
+                show #end-date-label then show #end-date then show #week-day-group
+            end">
+                <option value="fixed_date">During a single day</option>
+                <option value="every_day" selected>Every day during a date range</option>
+                <option value="select_days">During certain days of the week in a date range</option>
+            </select>
+        </div>
+
+        <!-- Date Range -->
+        <div class="row mb-3">
+            <div class="col">
+                <label for="start-date" id="start-date-label" class="form-label">Start Date</label>
+                <input type="date" min={vm.dateToday} class="form-control" id="start-date" name="start_date" required>
+            </div>
+            <div class="col">
+                <label for="end-date" id="end-date-label" class="form-label">End Date</label>
+                <input type="date" min={vm.dateToday} class="form-control" id="end-date" name="end_date" required>
+            </div>
+        </div>
+
+        <!-- Days of the Week -->
+        <div id="week-day-group" style="display: none;" class="mb-3 w-100">
+            <label class="form-label d-block">Days of the Week</label>
+            <div class="btn-group w-100 flex-wrap"  role="group" aria-label="Weekday toggle buttons">
+                for i, dayName := range vm.daysOfTheWeek {
+                    <input disabled type="checkbox" class="btn-check" id={fmt.Sprintf("day-%d", i)} name="weekdays" value={i} autocomplete="off">
+                    <label disabled class="btn btn-custom" for={fmt.Sprintf("day-%d", i)}>{dayName}</label>
+                }
+            </div>
+        </div>
+
+        <!-- Hours of the Day -->
+        <div class="mb-3">
+            <label class="form-label d-block">Hours of the Day</label>
+            <div class="container px-0">
+                <div class="row row-cols-6 g-2">
+                    for i := range 24 {
+                        {{
+                            hour := fmt.Sprintf("%02d:00", i)
+                            numString := fmt.Sprintf("%d", i)
+                        }}
+                        <div class="col">
+                            <input type="checkbox" class="btn-check" id={"hour-"+ numString } name="hours" value={numString} autocomplete="off">
+                            <label class="btn btn-outline-custom w-100" for={"hour-"+numString}>{ hour }</label>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </form>
+}
+
+templ editAvailabilityCompFooter() {
+    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+    <button type="submit" class="btn btn-custom" form="availability-edit-form">Save changes</button>
+}

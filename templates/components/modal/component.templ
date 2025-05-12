@@ -1,0 +1,17 @@
+package modal
+
+templ component(m *Model) {
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{m.title}</h5>
+            </div>
+            <div class="modal-body">
+                @m.modalBody
+            </div>
+            <div class="modal-footer">
+                @m.modalFooter
+            </div>
+        </div>
+    </div>
+}
