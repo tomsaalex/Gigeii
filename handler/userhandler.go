@@ -4,39 +4,26 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"example.com/repository"
 	"example.com/service"
 	"example.com/templates/base"
-	custalerts "example.com/templates/components/alerts"
 	"example.com/templates/pages"
 	"github.com/go-chi/chi/v5"
-
-	"regexp"
 )
 
 type UserHandler struct {
 	userService   *service.UserService
 	jwtUtil       *service.JwtUtil
 	userDTOMapper *UserDTOMapper
-
-	emailRegexp *regexp.Regexp
 }
 
 func NewUserHandler(userService *service.UserService, jwtUtil *service.JwtUtil) *UserHandler {
-	emailRegexp, err := regexp.Compile(".+@.+")
-
-	if err != nil {
-		log.Fatal("Email validation RegExp is invalid")
-	}
-
 	return &UserHandler{
 		userService:   userService,
 		jwtUtil:       jwtUtil,
 		userDTOMapper: &UserDTOMapper{},
-		emailRegexp:   emailRegexp,
 	}
 }
 
@@ -62,25 +49,25 @@ func (h *UserHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		custalerts.MakeAlertDanger("Invalid username or password. Please try again.").Render(r.Context(), w)
+		w.Write([]byte("<div class=\"alert alert-danger\">Invalid username or password. Please try again.</div>"))
 		return
 	}
 
-	errorsList := make([]string, 0)
+	errHappened := false
+	errorsList := ""
 	if userDTO.Email == "" {
-		errorsList = append(errorsList, "Email address is missing.")
-	} else if !h.emailRegexp.MatchString(userDTO.Email) {
-		errorsList = append(errorsList, "Email is not valid.")
+		errorsList += "Email address missing\n"
+		errHappened = true
 	}
 	if userDTO.Password == "" {
-		errorsList = append(errorsList, "Password is missing.")
-	} else if len(userDTO.Password) < 6 {
-		errorsList = append(errorsList, "Password must contain at least 6 characters.")
+		errorsList += "Password missing\n"
+		errHappened = true
 	}
 
-	if len(errorsList) != 0 {
+	// TODO: Return here if any error happened
+	if errHappened {
 		w.WriteHeader(http.StatusBadRequest)
-		custalerts.MakeMultiLineAlertDanger(errorsList).Render(r.Context(), w)
+		w.Write([]byte("<div class=\"alert alert-danger\">" + errorsList + "</div>"))
 		return
 	}
 
@@ -92,13 +79,13 @@ func (h *UserHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 
 		if errors.As(err, &authErr) {
 			w.WriteHeader(http.StatusBadRequest)
-			custalerts.MakeAlertDanger("Credentials invalid.").Render(r.Context(), w)
+			w.Write([]byte("<div class=\"alert alert-danger\"> Credentials invalid </div>"))
 		} else if errors.As(err, &entityNotFoundErr) {
 			w.WriteHeader(http.StatusBadRequest)
-			custalerts.MakeAlertDanger("No user has that email address.").Render(r.Context(), w)
+			w.Write([]byte("<div class=\"alert alert-danger\"> No user has that email address </div>"))
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
-			custalerts.MakeAlertDanger("Unknown error occurred.").Render(r.Context(), w)
+			w.Write([]byte("<div class=\"alert alert-danger\"> Unknown error occurred </div>"))
 		}
 		return
 	}
@@ -107,7 +94,7 @@ func (h *UserHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		custalerts.MakeAlertDanger("Unknown error occurred.").Render(r.Context(), w)
+		w.Write([]byte("<div class=\"alert alert-danger\"> Unknown error occurred </div>"))
 		return
 	}
 
@@ -133,33 +120,30 @@ func (h *UserHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		custalerts.MakeAlertDanger("Invalid username or password. Please try again.").Render(r.Context(), w)
+		w.Write([]byte("<div class=\"alert alert-danger\"> Invalid username or password. Please try again. </div>"))
 		return
 	}
 
-	errorsList := make([]string, 0)
+	errorsList := ""
 	if userDTO.Email == "" {
-		errorsList = append(errorsList, "Email is missing.")
-	} else if !h.emailRegexp.MatchString(userDTO.Email) {
-		errorsList = append(errorsList, "Email is not valid.")
+		errorsList += "Email is missing\n"
 	}
 	if userDTO.Username == "" {
-		errorsList = append(errorsList, "Username is missing.")
+		errorsList += "Username is missing\n"
 	}
 	if userDTO.Password == "" {
-		errorsList = append(errorsList, "Password is missing.")
-	} else if len(userDTO.Password) < 6 {
-		errorsList = append(errorsList, "Password must contain at least 6 characters.")
+		errorsList += "Password is missing\n"
 	}
 	if userDTO.ConfirmPassword == "" {
-		errorsList = append(errorsList, "Confirm Password is missing.")
-	} else if userDTO.Password != userDTO.ConfirmPassword {
-		errorsList = append(errorsList, "Passwords do not match.")
+		errorsList += "Confirm Password is missing\n"
+	}
+	if userDTO.Password != userDTO.ConfirmPassword {
+		errorsList += "Passwords do not match\n"
 	}
 
-	if len(errorsList) != 0 {
+	if errorsList != "" {
 		w.WriteHeader(http.StatusBadRequest)
-		custalerts.MakeMultiLineAlertDanger(errorsList).Render(r.Context(), w)
+		w.Write([]byte("<div class=\"alert alert-danger\">" + errorsList + "</div>"))
 		return
 	}
 
@@ -172,13 +156,13 @@ func (h *UserHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 
 		if errors.As(err, &authErr) {
 			w.WriteHeader(http.StatusInternalServerError)
-			custalerts.MakeAlertDanger("Couldn't register user.").Render(r.Context(), w)
+			w.Write([]byte("<div class=\"alert alert-danger\"> Couldn't register user </div>"))
 		} else if errors.As(err, &duplicateEntityErr) {
 			w.WriteHeader(http.StatusBadRequest)
-			custalerts.MakeAlertDanger("Email is alreay in use by a different user.").Render(r.Context(), w)
+			w.Write([]byte("<div class=\"alert alert-danger\"> Email is alreay in use by a different user </div>"))
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
-			custalerts.MakeAlertDanger("An unknown error occurred.").Render(r.Context(), w)
+			w.Write([]byte("<div class=\"alert alert-danger\"> An unknown error occurred </div>"))
 		}
 		return
 	}
@@ -187,7 +171,8 @@ func (h *UserHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		custalerts.MakeAlertDanger("Couldn't register user.").Render(r.Context(), w)
+		w.Write([]byte("<div class=\"alert alert-danger\"> Couldn't register user </div>"))
+
 		return
 	}
 
