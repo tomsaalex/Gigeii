@@ -2,4 +2,4 @@
 /db/models.go
 /db/*.sql.go
 
-/templates/*/*_templ.go
+/templates/**/*_templ.go
