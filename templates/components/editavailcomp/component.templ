@@ -50,12 +50,17 @@ templ editAvailabilityCompBody(vm *ViewModel) {
             font-size: 0.9rem;
             padding: 0.5rem 1rem;
         }
+        .fade-out {
+            opacity: 0;
+            transition: opacity 300ms ease;
+        }
     </style>
     <form 
-        id="availability-edit-form"
+        id="availability-form" 
         hx-post="/availabilities"
         hx-target-error="#response"
         hx-ext="form-json, response-targets"
+        hx-params="not time-temp"
         class="needs-validation"
         novalidate
         _=" on htmx:afterRequest
@@ -137,34 +142,48 @@ templ editAvailabilityCompBody(vm *ViewModel) {
             </div>
         </div>
 
-        <!-- Hours of the Day -->
-        <div id="hours-container" class="mb-3">
+        
+        <div id="time-input-wrapper" class="mb-3">
+            <label for="time-input" class="form-label">Add a Time</label>
+            <div class="d-flex gap-2">
+                <input type="time" name="time-temp" id="time-input" class="form-control" />
+                <button
+                type="button"
+                class="btn btn-primary"
+                hx-get="/times"
+                hx-include="#time-input"
+                hx-target="#time-list"
+                hx-swap="beforeend"
+                hx-params="*"
+                _="on htmx:beforeRequest
+                set newTime to #time-input's value
+                set existingTimes to #time-list.querySelectorAll('[data-time]')
+                for time in existingTimes
+                    if time.dataset.time is newTime
+                        alert('This time has already been added')
+                        call event.preventDefault()
+                        exit
+                    end
+                end">
+                Add
+                </button>
+            </div>
+
             <label class="form-label d-block">Hours of the Day</label>
             <div class="container px-0">
-                <div class="row row-cols-6 g-2">
-                    for i := range 24 {
-                        {{
-                            hour := fmt.Sprintf("%02d:00", i)
-                            numString := fmt.Sprintf("%d", i)
-                        }}
-                        <div class="col">
-                            <input type="checkbox" class="btn-check" id={"hour-"+ numString } name="hours" value={numString} autocomplete="off">
-                            <label class="btn btn-outline-custom w-100" for={"hour-"+numString}>{ hour }</label>
-                        </div>
-                    }
+                <div id="time-list" class="row row-cols-6 g-2">
+                    // Time components go here
                 </div>
             </div>
-        </div>
-        <div id="hours-feedback" class="invalid-feedback" style="display: none;">
-            Please select at least one hour.
         </div>
 
     </form>
     <script>
         (() => {
             document.addEventListener("htmx:beforeRequest", function (event) {
+                console.log("Hello?")
                 const form = event.target.closest("form")
-                if (!form) return
+                if (!form || event.target.id != "availability-form") { console.log("yikes");return}
 
                 let valid = true
 
@@ -180,7 +199,7 @@ templ editAvailabilityCompBody(vm *ViewModel) {
                     const startDate = new Date(start.value)
                     const endDate = new Date(end.value)
 
-                    if (start.value && end.value && endDate < startDate) {
+                    if (start.value && end.value && endDate <= startDate) {
                         valid = false
                         end.setCustomValidity("End date must be after start date.")
                     } else {
@@ -202,18 +221,6 @@ templ editAvailabilityCompBody(vm *ViewModel) {
                     }
                 }
 
-                // Custom Validation 3: At least one hour selected
-
-                const hourCheckboxes = document.querySelectorAll("#hours-container input[type='checkbox']")
-                const oneChecked = Array.from(hourCheckboxes).some(cb => cb.checked)
-                const feedback = document.getElementById("hours-feedback")
-                if (!oneChecked) {
-                    valid = false
-                    feedback.style.display = "block"
-                } else {
-                    feedback.style.display = "none"
-                }
-
                 if (!valid) {
                     event.preventDefault()
                     form.classList.add("was-validated")
@@ -225,5 +232,5 @@ templ editAvailabilityCompBody(vm *ViewModel) {
 
 templ editAvailabilityCompFooter() {
     <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
-    <button type="submit" class="btn btn-custom" form="availability-edit-form">Save changes</button>
+    <button type="submit" class="btn btn-custom" form="availability-form">Save changes</button>
 }
