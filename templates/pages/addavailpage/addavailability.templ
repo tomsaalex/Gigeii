@@ -1,6 +1,25 @@
 package addavailpage
 
 import "fmt"
+import "strings"
+
+templ TimeComponent(time string) {
+    {{
+        idSafeTime := strings.Replace(time, ":", "", -1)
+    }}
+    <div data-time={time} class="col border rounded time-card">
+        <div class="d-flex justify-content-between align-items-center">
+            <label class="fs-5" for={"hour-"+idSafeTime}>{ time }</label>
+            <button type="button" class="btn-close" aria-label="Remove"
+            _="on click
+                add .fade-out to closest .time-card
+                wait 300ms
+                then remove closest .time-card">
+            </button>
+            <input type="hidden" id={"input-" + idSafeTime} name="times" value={idSafeTime}>
+        </div>
+    </div>
+}
 
 templ AvailabilityAddComponent(vm *ViewModel) {
     <style>
@@ -49,19 +68,17 @@ templ AvailabilityAddComponent(vm *ViewModel) {
             border-color: #6a11cb;
             box-shadow: 0 0 0 0.2rem rgba(106, 17, 203, 0.25);
         }
-        .alert {
-            border-radius: 10px;
-            font-size: 0.9rem;
-            padding: 0.5rem 1rem;
-        }
+        
+        
     </style>
     <form 
-        id="availability-add-form" 
-        class="container mt-4 form-card needs-validation"
+        id="availability-form" 
+        class="mt-4 form-card needs-validation"
         hx-post="/availabilities"
         hx-target-error="#response"
         hx-swap="none"
         hx-ext="form-json,response-targets"
+        hx-params="not time-temp"
         novalidate
     >
         <div id="response" class="mb-3"></div>
@@ -139,27 +156,40 @@ templ AvailabilityAddComponent(vm *ViewModel) {
             </div>
         </div>
 
-        <!-- Hours of the Day -->
-        <div id="hours-container" class="mb-3">
+        <div id="time-input-wrapper" class="mb-3">
+            <label for="time-input" class="form-label">Add a Time</label>
+            <div class="d-flex gap-2">
+                <input type="time" name="time-temp" id="time-input" class="form-control" />
+                <button
+                type="button"
+                class="btn btn-primary"
+                hx-get="/times"
+                hx-include="#time-input"
+                hx-target="#time-list"
+                hx-swap="beforeend"
+                hx-params="*"
+                _="on htmx:beforeRequest
+                set newTime to #time-input's value
+                set existingTimes to #time-list.querySelectorAll('[data-time]')
+                for time in existingTimes
+                    if time.dataset.time is newTime
+                        alert('This time has already been added')
+                        call event.preventDefault()
+                        exit
+                    end
+                end">
+                Add
+                </button>
+            </div>
+
             <label class="form-label d-block">Hours of the Day</label>
             <div class="container px-0">
-                <div class="row row-cols-6 g-2">
-                    for i := range 24 {
-                        {{
-                            hour := fmt.Sprintf("%02d:00", i)
-                            numString := fmt.Sprintf("%d", i)
-                        }}
-                        <div class="col">
-                            <input type="checkbox" class="btn-check" id={"hour-"+ numString } name="hours" value={numString} autocomplete="off">
-                            <label class="btn btn-outline-custom w-100" for={"hour-"+numString}>{ hour }</label>
-                        </div>
-                    }
+                <div id="time-list" class="row row-cols-6 g-2">
+                    // Time components go here
                 </div>
             </div>
         </div>
-        <div id="hours-feedback" class="invalid-feedback" style="display: none;">
-            Please select at least one hour.
-        </div>
+
 
         <!-- Submit -->
         <button type="submit" class="btn btn-custom w-100">Submit Availability</button>
@@ -168,7 +198,7 @@ templ AvailabilityAddComponent(vm *ViewModel) {
         (() => {
             document.addEventListener("htmx:beforeRequest", function (event) {
                 const form = event.target.closest("form")
-                if (!form) return
+                if (!form || event.target.id != "availability-form") return
 
                 let valid = true
 
@@ -204,18 +234,6 @@ templ AvailabilityAddComponent(vm *ViewModel) {
                     } else {
                         feedback.style.display = "none"
                     }
-                }
-
-                // Custom Validation 3: At least one hour selected
-
-                const hourCheckboxes = document.querySelectorAll("#hours-container input[type='checkbox']")
-                const oneChecked = Array.from(hourCheckboxes).some(cb => cb.checked)
-                const feedback = document.getElementById("hours-feedback")
-                if (!oneChecked) {
-                    valid = false
-                    feedback.style.display = "block"
-                } else {
-                    feedback.style.display = "none"
                 }
 
                 if (!valid) {
