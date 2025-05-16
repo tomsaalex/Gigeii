@@ -3,7 +3,70 @@ package base
 templ Theming() {
     <style>
         :root {
-            
+            --bs-body-font-family: "Poppins", var(--bs-font-sans-serif);
+        
+            --cs-alert-border-radius: 10px;
+            --cs-title-color: #333;
+
+            --cs-light-blue: hsl(218, 97%, 57%);
+
+            --cs-violet: hsl(269, 85%, 43%);
+            --cs-violet-25a: hsla(269, 85%, 43%, 0.25);
+            --cs-violet-darker: hsl(269, 85%, 33%);
+            --cs-violet-darkest: hsl(269, 85%, 23%);
+        }
+
+        .alert-custom {
+            font-size: 0.9rem;
+            --bs-alert-padding-x: 1rem;
+            --bs-alert-padding-y: 0.5rem;
+            --bs-alert-border-radius: var(--cs-alert-border-radius);
+        }
+
+        .form-card {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            background: var(--bs-white);
+            padding: 2rem;
+            width: 400px;
+        }
+
+        .form-title {
+            color: var(--cs-title-color);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        .form-control:focus {
+            border-color: var(--cs-violet);
+            box-shadow: 0 0 0 0.2rem var(--cs-violet-25a);
+        }
+
+        .btn-custom {
+            --bs-btn-font-weight: 600;
+            --bs-btn-padding-x: 0.75rem;
+            --bs-btn-padding-y: 0.75rem;
+            --bs-btn-color: var(--bs-white);
+            --bs-btn-bg: var(--cs-violet);
+            --bs-btn-border-color: var(--cs-violet);
+            --bs-btn-hover-color: var(--bs-white);
+            --bs-btn-hover-bg: var(--cs-violet-darker);
+            --bs-btn-hover-border-color: var(--cs-violet-darker);
+            --bs-btn-active-color: var(--bs-btn-hover-color);
+            --bs-btn-active-bg: var(--cs-violet-darkest);
+            --bs-btn-active-border-color: var(--cs-violet-darkest);
+
+            transition: background-color 0.3s ease;
+        }
+
+        .link-custom {
+            color: var(--cs-violet);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .link-custom:hover {
+            color: var(--cs-violet-darker);
+            text-decoration: underline;
         }
     </style>
 }
