@@ -9,12 +9,18 @@ templ TimeComponent(time string) {
     }}
     <div data-time={time} class="col border rounded time-card">
         <div class="d-flex justify-content-between align-items-center">
-            <label class="fs-5" for={"hour-"+idSafeTime}>{ time }</label>
+            <label class="fs-5" for={"hour-"+idSafeTime}>{time}</label>
             <button type="button" class="btn-close" aria-label="Remove"
             _="on click
                 add .fade-out to closest .time-card
                 wait 300ms
-                then remove closest .time-card">
+                then remove closest .time-card
+                if #time-list.firstElementChild is null 
+                    then add .hidden to #hours-label
+                    add .d-none to #hours-label
+                    remove .d-block from #hours-label
+                end
+                ">
             </button>
             <input type="hidden" id={"input-" + idSafeTime} name="times" value={idSafeTime}>
         </div>
@@ -55,29 +61,31 @@ templ AvailabilityAddComponent(vm *ViewModel) {
         .btn-outline-custom {
             --bs-btn-font-weight: 600;
             --bs-btn-color: var(--bs-black);
-            --bs-btn-border-color: #6a11cb;
-            --bs-btn-hover-color: var(--bs-white);
-            --bs-btn-hover-bg: #520d9c;
-            --bs-btn-hover-border-color: #520d9c;
-            --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
-            --bs-btn-active-color: var(--bs-white);
-            --bs-btn-active-bg: #39096d;
-            --bs-btn-active-border-color: #39096d;
+            --bs-btn-border-color: #6a11cb;style="box-sizing: border-box;"
+            opacity: 0;
+            transition: opacity 300ms ease;
         }
         .form-control:focus {
             border-color: #6a11cb;
             box-shadow: 0 0 0 0.2rem rgba(106, 17, 203, 0.25);
         }
-        
-        
+        .alert {
+            border-radius: 10px;
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+        .fade-out {
+            opacity: 0;
+            transition: opacity 300ms ease;
+        }
     </style>
     <form 
         id="availability-form" 
         class="mt-4 form-card needs-validation"
         hx-post="/availabilities"
         hx-target-error="#response"
-        hx-swap="none"
-        hx-ext="form-json,response-targets"
+        hx-swap="innerHTML"
+        hx-ext="form-json, response-targets"
         hx-params="not time-temp"
         novalidate
     >
@@ -131,12 +139,12 @@ templ AvailabilityAddComponent(vm *ViewModel) {
             <div class="col">
                 <label for="start-date" id="start-date-label" class="form-label">Start Date</label>
                 <input type="date" min={vm.dateToday} class="form-control" id="start-date" name="start_date" required>
-                <div class="invalid-feedback">Please enter a valid upcoming date.</div>
+                <div class="invalid-feedback">Date is invalid.</div>
             </div>
             <div class="col">
                 <label for="end-date" id="end-date-label" class="form-label">End Date</label>
                 <input type="date" min={vm.dateToday} class="form-control" id="end-date" name="end_date" required>
-                <div class="invalid-feedback">Please enter a valid date after the start date.</div>
+                <div class="invalid-feedback">End date must be after start date.</div>
             </div>
         </div>
 
@@ -147,7 +155,6 @@ templ AvailabilityAddComponent(vm *ViewModel) {
                 for i, dayName := range vm.daysOfTheWeek {
                     <input disabled type="checkbox" class="btn-check" id={fmt.Sprintf("day-%d", i)} name="weekdays" value={i} autocomplete="off">
                     <label disabled class="btn btn-custom" for={fmt.Sprintf("day-%d", i)}>{dayName}</label>
-                    <div class="invalid-feedback">You must select at least one day.</div>
                 }
             </div>
 
@@ -162,7 +169,7 @@ templ AvailabilityAddComponent(vm *ViewModel) {
                 <input type="time" name="time-temp" id="time-input" class="form-control" />
                 <button
                 type="button"
-                class="btn btn-primary"
+                class="btn btn-custom"
                 hx-get="/times"
                 hx-include="#time-input"
                 hx-target="#time-list"
@@ -171,22 +178,31 @@ templ AvailabilityAddComponent(vm *ViewModel) {
                 _="on htmx:beforeRequest
                 set newTime to #time-input's value
                 set existingTimes to #time-list.querySelectorAll('[data-time]')
+                
                 for time in existingTimes
                     if time.dataset.time is newTime
-                        alert('This time has already been added')
+                        put 'This time has already been added' into #hours-feedback's innerHTML
+                        show #hours-feedback
                         call event.preventDefault()
                         exit
                     end
-                end">
+                end
+                hide #hours-feedback
+                remove .d-none from #hours-label
+                add .d-block to #hours-label
+                ">
                 Add
                 </button>
             </div>
 
-            <label class="form-label d-block">Hours of the Day</label>
+            <label id="hours-label" class="form-label d-none" >Hours of the Day</label>
             <div class="container px-0">
                 <div id="time-list" class="row row-cols-6 g-2">
                     // Time components go here
                 </div>
+            </div>
+            <div id="hours-feedback" class="invalid-feedback" style="display: none;">
+                Please add at least one hour to the list.
             </div>
         </div>
 
@@ -207,7 +223,7 @@ templ AvailabilityAddComponent(vm *ViewModel) {
                     valid = false
                 }
 
-                // 🔍 Custom Validation 1: End date after start date
+                // Custom Validation 1: End date after start date
                 const start = form.querySelector("#start-date")
                 const end = form.querySelector("#end-date")
                 if (start && end && !end.disabled) {
@@ -222,7 +238,7 @@ templ AvailabilityAddComponent(vm *ViewModel) {
                     }
                 }
 
-                // 🔍 Custom Validation 2: At least one weekday checked
+                // Custom Validation 2: At least one weekday checked
                 const weekdayGroup = form.querySelector("#week-day-group")
                 if (weekdayGroup && window.getComputedStyle(weekdayGroup).display !== "none") {
                     const checkboxes = weekdayGroup.querySelectorAll("input[type='checkbox']")
@@ -234,6 +250,17 @@ templ AvailabilityAddComponent(vm *ViewModel) {
                     } else {
                         feedback.style.display = "none"
                     }
+                }
+
+                // Custom Validation 3: At least one hour selected
+                const hoursGroup = form.querySelectorAll("#time-list .time-card")
+                const hoursFeedback = document.getElementById("hours-feedback")
+                if (hoursGroup.length != 0) {
+                    hoursFeedback.style.display = "none"
+                } else {
+                    valid = false
+                    hoursFeedback.style.display = "block"
+                    hoursFeedback.innerHTML = "Please add at least one hour to the list."
                 }
 
                 if (!valid) {

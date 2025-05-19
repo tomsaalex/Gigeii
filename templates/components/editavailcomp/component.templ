@@ -57,11 +57,12 @@ templ editAvailabilityCompBody(vm *ViewModel) {
     </style>
     <form 
         id="availability-form" 
+        class="needs-validation"
         hx-post="/availabilities"
         hx-target-error="#response"
+        hx-swap="innerHTML"
         hx-ext="form-json, response-targets"
         hx-params="not time-temp"
-        class="needs-validation"
         novalidate
         _=" on htmx:afterRequest
                 if detail.xhr.getResponseHeader('Hx-Response-Status') is 'success'
@@ -117,12 +118,12 @@ templ editAvailabilityCompBody(vm *ViewModel) {
             <div class="col">
                 <label for="start-date" id="start-date-label" class="form-label">Start Date</label>
                 <input type="date" min={vm.dateToday} class="form-control" id="start-date" name="start_date" required>
-                <div class="invalid-feedback">Please enter a valid upcoming date.</div>
+                <div class="invalid-feedback">Date is invalid.</div>
             </div>
             <div class="col">
                 <label for="end-date" id="end-date-label" class="form-label">End Date</label>
                 <input type="date" min={vm.dateToday} class="form-control" id="end-date" name="end_date" required>
-                <div class="invalid-feedback">Please enter a valid date after the start date.</div>
+                <div class="invalid-feedback">End date must be after start date.</div>
             </div>
         </div>
 
@@ -133,7 +134,6 @@ templ editAvailabilityCompBody(vm *ViewModel) {
                 for i, dayName := range vm.daysOfTheWeek {
                     <input disabled type="checkbox" class="btn-check" id={fmt.Sprintf("day-%d", i)} name="weekdays" value={i} autocomplete="off">
                     <label disabled class="btn btn-custom" for={fmt.Sprintf("day-%d", i)}>{dayName}</label>
-                    <div class="invalid-feedback">You must select at least one day.</div>
                 }
             </div>
 
@@ -142,14 +142,13 @@ templ editAvailabilityCompBody(vm *ViewModel) {
             </div>
         </div>
 
-        
         <div id="time-input-wrapper" class="mb-3">
             <label for="time-input" class="form-label">Add a Time</label>
             <div class="d-flex gap-2">
                 <input type="time" name="time-temp" id="time-input" class="form-control" />
                 <button
                 type="button"
-                class="btn btn-primary"
+                class="btn btn-custom"
                 hx-get="/times"
                 hx-include="#time-input"
                 hx-target="#time-list"
@@ -160,20 +159,28 @@ templ editAvailabilityCompBody(vm *ViewModel) {
                 set existingTimes to #time-list.querySelectorAll('[data-time]')
                 for time in existingTimes
                     if time.dataset.time is newTime
-                        alert('This time has already been added')
+                        put 'This time has already been added' into #hours-feedback's innerHTML
+                        show #hours-feedback
                         call event.preventDefault()
                         exit
                     end
-                end">
+                end
+                hide #hours-feedback
+                remove .d-none from #hours-label
+                add .d-block to #hours-label
+                ">
                 Add
                 </button>
             </div>
 
-            <label class="form-label d-block">Hours of the Day</label>
+            <label id="hours-label" class="form-label d-none" >Hours of the Day</label>
             <div class="container px-0">
                 <div id="time-list" class="row row-cols-6 g-2">
                     // Time components go here
                 </div>
+            </div>
+            <div id="hours-feedback" class="invalid-feedback" style="display: none;">
+                Please add at least one hour to the list.
             </div>
         </div>
 
@@ -181,9 +188,8 @@ templ editAvailabilityCompBody(vm *ViewModel) {
     <script>
         (() => {
             document.addEventListener("htmx:beforeRequest", function (event) {
-                console.log("Hello?")
                 const form = event.target.closest("form")
-                if (!form || event.target.id != "availability-form") { console.log("yikes");return}
+                if (!form || event.target.id != "availability-form") return
 
                 let valid = true
 
@@ -192,7 +198,7 @@ templ editAvailabilityCompBody(vm *ViewModel) {
                     valid = false
                 }
 
-                // 🔍 Custom Validation 1: End date after start date
+                // Custom Validation 1: End date after start date
                 const start = form.querySelector("#start-date")
                 const end = form.querySelector("#end-date")
                 if (start && end && !end.disabled) {
@@ -207,7 +213,7 @@ templ editAvailabilityCompBody(vm *ViewModel) {
                     }
                 }
 
-                // 🔍 Custom Validation 2: At least one weekday checked
+                // Custom Validation 2: At least one weekday checked
                 const weekdayGroup = form.querySelector("#week-day-group")
                 if (weekdayGroup && window.getComputedStyle(weekdayGroup).display !== "none") {
                     const checkboxes = weekdayGroup.querySelectorAll("input[type='checkbox']")
@@ -219,6 +225,17 @@ templ editAvailabilityCompBody(vm *ViewModel) {
                     } else {
                         feedback.style.display = "none"
                     }
+                }
+
+                // Custom Validation 3: At least one hour selected
+                const hoursGroup = form.querySelectorAll("#time-list .time-card")
+                const hoursFeedback = document.getElementById("hours-feedback")
+                if (hoursGroup.length != 0) {
+                    hoursFeedback.style.display = "none"
+                } else {
+                    valid = false
+                    hoursFeedback.style.display = "block"
+                    hoursFeedback.innerHTML = "Please add at least one hour to the list."
                 }
 
                 if (!valid) {

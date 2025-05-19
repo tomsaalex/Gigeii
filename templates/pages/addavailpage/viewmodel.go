@@ -12,7 +12,7 @@ type ViewModel struct {
 }
 
 func MakeNewAvailabilityAddPage() *ViewModel {
-	daysOfTheWeek := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+	daysOfTheWeek := []string{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
 	dateToday := time.Now().Format("2006-01-02")
 
 	return &ViewModel{
