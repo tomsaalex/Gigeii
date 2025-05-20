@@ -1,8 +1,33 @@
 package editavailcomp
 
 import "fmt"
+import "strings"
 
-templ editAvailabilityCompBody(vm *ViewModel) {
+templ TimeComponent(time string) {
+    {{
+        idSafeTime := strings.Replace(time, ":", "", -1)
+    }}
+    <div data-time={time} class="col border rounded time-card">
+        <div class="d-flex justify-content-between align-items-center">
+            <label class="fs-5" for={"hour-"+idSafeTime}>{time}</label>
+            <button type="button" class="btn-close" aria-label="Remove"
+            _="on click
+                add .fade-out to closest .time-card
+                wait 300ms
+                then remove closest .time-card
+                if #time-list.firstElementChild is null 
+                    then add .hidden to #hours-label
+                    add .d-none to #hours-label
+                    remove .d-block from #hours-label
+                end
+                ">
+            </button>
+            <input type="hidden" id={"input-" + idSafeTime} name="times" value={idSafeTime}>
+        </div>
+    </div>
+}
+
+templ EditAvailabilityCompBody(vm *ViewModel) {
     <style>
         .form-card {
             border-radius: 15px;
@@ -10,6 +35,9 @@ templ editAvailabilityCompBody(vm *ViewModel) {
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             background: #ffffff;
             padding: 2rem;
+        }
+        .form-card {
+            max-width: 500px;
         }
         .form-title {
             color: #333;
@@ -57,19 +85,28 @@ templ editAvailabilityCompBody(vm *ViewModel) {
     </style>
     <form 
         id="availability-form" 
-        class="needs-validation"
-        hx-post="/availabilities"
+        class={"needs-validation", templ.KV("form-card mt-4", !vm.modalVersion)}
+        if vm.modalVersion {
+            hx-put="/availabilities"
+        } else {
+            hx-post="/availabilities"
+        }
         hx-target-error="#response"
         hx-swap="innerHTML"
         hx-ext="form-json, response-targets"
         hx-params="not time-temp"
         novalidate
-        _=" on htmx:afterRequest
+        if vm.modalVersion {
+            _=" on htmx:afterRequest
                 if detail.xhr.getResponseHeader('Hx-Response-Status') is 'success'
                     call bootstrap.Modal.getInstance(#modals-here).hide()
                 end"
+        }
     >
         <div id="response" class="mb-3"></div>
+        if !vm.modalVersion {
+            <h3 class="form-title text-center">Add Availability</h3>
+        }
 
         <!-- Price -->
         <div class="mb-3">
@@ -96,16 +133,16 @@ templ editAvailabilityCompBody(vm *ViewModel) {
             _="on change 
             if my value is 'every_day'
                 set #start-date-label's innerText to 'Start Date'
-                add @disabled to <#week-day-group input/> then remove @disabled from #end-date
-                show #end-date-label then show #end-date then hide #week-day-group
+                add @disabled to <#week-day-group input/> then remove @disabled from <#end-date-col input/>
+                show #end-date-label then show <#end-date-col input/> then hide #week-day-group
             else if my value is 'fixed_date'
                 set #start-date-label's innerText to 'Date'
-                add @disabled to <#week-day-group input/> then add @disabled to #end-date
-                hide #end-date-label then hide #end-date then hide #week-day-group   
+                add @disabled to <#week-day-group input/> then add @disabled to <#end-date-col input/>
+                hide #end-date-label then hide <#end-date-col input/> then hide #week-day-group   
             else if my value is 'select_days'
                 set #start-date-label's innerText to 'Start Date'
-                remove @disabled from <#week-day-group input/> then remove @disabled from #end-date
-                show #end-date-label then show #end-date then show #week-day-group
+                remove @disabled from <#week-day-group input/> then remove @disabled from <#end-date-col input/>
+                show #end-date-label then show <#end-date-col input/> then show #week-day-group
             end">
                 <option value="fixed_date">During a single day</option>
                 <option value="every_day" selected>Every day during a date range</option>
@@ -115,14 +152,14 @@ templ editAvailabilityCompBody(vm *ViewModel) {
 
         <!-- Date Range -->
         <div class="row mb-3">
-            <div class="col">
-                <label for="start-date" id="start-date-label" class="form-label">Start Date</label>
-                <input type="date" min={vm.dateToday} class="form-control" id="start-date" name="start_date" required>
+            <div id="start-date-col" class="col">
+                <label for="start-date" id="start-date-label" class="start-date-input form-label">Start Date</label>
+                <input placeholder="Enter a start date..." type="date" min={vm.dateToday} class="form-control" id="start-date" name="start_date" required>
                 <div class="invalid-feedback">Date is invalid.</div>
             </div>
-            <div class="col">
-                <label for="end-date" id="end-date-label" class="form-label">End Date</label>
-                <input type="date" min={vm.dateToday} class="form-control" id="end-date" name="end_date" required>
+            <div id="end-date-col" class="col">
+                <label for="end-date" id="end-date-label" class="end-date-input form-label">End Date</label>
+                <input placeholder="Enter an end date..." type="date" min={vm.dateToday} class="form-control" id="end-date" name="end_date" required>
                 <div class="invalid-feedback">End date must be after start date.</div>
             </div>
         </div>
@@ -145,7 +182,7 @@ templ editAvailabilityCompBody(vm *ViewModel) {
         <div id="time-input-wrapper" class="mb-3">
             <label for="time-input" class="form-label">Add a Time</label>
             <div class="d-flex gap-2">
-                <input type="time" name="time-temp" id="time-input" class="form-control" />
+                <input placeholder="Enter a time..." type="text" name="time-temp" id="time-input" class="form-control" />
                 <button
                 type="button"
                 class="btn btn-custom"
@@ -155,19 +192,31 @@ templ editAvailabilityCompBody(vm *ViewModel) {
                 hx-swap="beforeend"
                 hx-params="*"
                 _="on htmx:beforeRequest
-                set newTime to #time-input's value
-                set existingTimes to #time-list.querySelectorAll('[data-time]')
-                for time in existingTimes
-                    if time.dataset.time is newTime
-                        put 'This time has already been added' into #hours-feedback's innerHTML
-                        show #hours-feedback
+                    set newTime to #time-input's value
+
+                    if newTime is ''
+                        put 'Please enter a time first' into #hours-feedback's innerHTML
+                        remove .d-none from #hours-feedback
+                        add .d-block to #hours-feedback
                         call event.preventDefault()
                         exit
                     end
-                end
-                hide #hours-feedback
-                remove .d-none from #hours-label
-                add .d-block to #hours-label
+
+                    set existingTimes to #time-list.querySelectorAll('[data-time]')
+                    
+                    for time in existingTimes
+                        if time.dataset.time is newTime
+                            put 'This time has already been added' into #hours-feedback's innerHTML
+                            remove .d-none from #hours-feedback
+                            add .d-block to #hours-feedback
+                            call event.preventDefault()
+                            exit
+                        end
+                    end
+                    remove .d-block from #hours-feedback
+                    add .d-none to #hours-feedback
+                    remove .d-none from #hours-label
+                    add .d-block to #hours-label
                 ">
                 Add
                 </button>
@@ -179,14 +228,25 @@ templ editAvailabilityCompBody(vm *ViewModel) {
                     // Time components go here
                 </div>
             </div>
-            <div id="hours-feedback" class="invalid-feedback" style="display: none;">
-                Please add at least one hour to the list.
+            <div id="hours-feedback" class="invalid-feedback d-none mt-3">
+                Please add at least one time to the list.
             </div>
         </div>
-
+        
+        if !vm.modalVersion {
+            <!-- Submit -->
+            <button type="submit" class="btn btn-custom w-100">Submit Availability</button>
+        }
     </form>
     <script>
         (() => {
+            flatpickr("#time-input", {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true
+            });
+
             document.addEventListener("htmx:beforeRequest", function (event) {
                 const form = event.target.closest("form")
                 if (!form || event.target.id != "availability-form") return
@@ -231,10 +291,12 @@ templ editAvailabilityCompBody(vm *ViewModel) {
                 const hoursGroup = form.querySelectorAll("#time-list .time-card")
                 const hoursFeedback = document.getElementById("hours-feedback")
                 if (hoursGroup.length != 0) {
-                    hoursFeedback.style.display = "none"
+                    hoursFeedback.classList.remove("d-block")
+                    hoursFeedback.classList.add("d-none");
                 } else {
                     valid = false
-                    hoursFeedback.style.display = "block"
+                    hoursFeedback.classList.remove("d-none")
+                    hoursFeedback.classList.add("d-block");
                     hoursFeedback.innerHTML = "Please add at least one hour to the list."
                 }
 

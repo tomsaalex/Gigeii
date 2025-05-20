@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 	"time"
+
+	"example.com/templates/components/editavailcomp"
 )
 
 type ViewModel struct {
@@ -22,5 +24,5 @@ func MakeNewAvailabilityAddPage() *ViewModel {
 }
 
 func (vm *ViewModel) Render(ctx context.Context, w io.Writer) error {
-	return availabilityAddPage(vm).Render(ctx, w)
+	return availabilityAddPage(editavailcomp.MakeNewAvailabilityEditComponent(false)).Render(ctx, w)
 }
