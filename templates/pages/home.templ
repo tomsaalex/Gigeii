@@ -1,53 +1,57 @@
 package pages
 
 import (
-    "example.com/templates/base")
+    "example.com/templates/base"
+)
 
 templ HomeContent() {
-    <div class="row mb-4 px-5"> 
-        <div class="col">
-            <h3 class="page-title">Welcome to Your Dashboard</h3>
-            <p class="page-subtitle">Here’s an overview of your app. Manage your account and explore features below.</p>
-        </div>
-    </div>
+    <div class="homepage-wrapper">
+        <div class="content-container">
+            <div class="row mb-4 px-3">
+                <div class="col">
+                    <h3 class="page-title">Welcome to Your Dashboard</h3>
+                    <p class="page-subtitle">Here’s an overview of your app. Manage your account and explore features below.</p>
+                </div>
+            </div>
 
-    <div class="row mb-4 px-5"> 
-        <div class="col-md-4">
-            <div class="dashboard-card">
-                <h4 class="dashboard-card-title">Account Profile</h4>
-                <p class="dashboard-card-text">Track your activity and usage statistics.</p>
-                <a href="/stats" class="link-custom">View Details</a>
+            <div class="row mb-4 px-3">
+                <div class="col-12 col-md-4">
+                    <div class="dashboard-card">
+                        <h4 class="dashboard-card-title">Account Profile</h4>
+                        <p class="dashboard-card-text">Track your activity and usage statistics.</p>
+                        <a href="/stats" class="link-custom">View Details</a>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="dashboard-card">
+                        <h4 class="dashboard-card-title">Recent Activity</h4>
+                        <p class="dashboard-card-text">Check your latest actions and updates.</p>
+                        <a href="/activity" class="link-custom">See More</a>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="dashboard-card">
+                        <h4 class="dashboard-card-title">Settings</h4>
+                        <p class="dashboard-card-text">Customize your preferences and profile.</p>
+                        <a href="/settings" class="link-custom">Configure</a>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="dashboard-card">
-                <h4 class="dashboard-card-title">Recent Activity</h4>
-                <p class="dashboard-card-text">Check your latest actions and updates.</p>
-                <a href="/activity" class="link-custom">See More</a>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="dashboard-card">
-                <h4 class="dashboard-card-title">Settings</h4>
-                <p class="dashboard-card-text">Customize your preferences and profile.</p>
-                <a href="/settings" class="link-custom">Configure</a>
-            </div>
-        </div>
-    </div>
 
-     <div class="row mb-4 px-5"> 
-            <div class="col-md-8"> 
-                <div class="dashboard-card">
-                    <h4 class="dashboard-card-title">Quick Actions</h4>
-                    <p class="dashboard-card-text">Perform common tasks quickly from here.</p>
-                    <div class="d-flex gap-2 mt-2">
-                        <a href="/view-availability" class="btn btn-custom btn-sm">View Availability</a>
-                        <a href="/add-availability" class="btn btn-custom btn-sm">Add Availability</a>
+            <div class="row mb-4 px-3">
+                <div class="col-12 col-md-8">
+                    <div class="dashboard-card">
+                        <h4 class="dashboard-card-title">Quick Actions</h4>
+                        <p class="dashboard-card-text">Perform common tasks quickly from here.</p>
+                        <div class="d-flex gap-2 mt-2">
+                            <a href="/view-availability" class="btn btn-custom btn-sm">View Availability</a>
+                            <a href="/add-availability" class="btn btn-custom btn-sm">Add Availability</a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
+    </div>
 }
 
 templ HomePage() {
