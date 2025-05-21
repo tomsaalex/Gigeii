@@ -25,9 +25,13 @@ func main() {
 	jwtHelper := service.NewJwtUtil()
 	userHandler := handler.NewUserHandler(userService, jwtHelper)
 
+	pageHandler := handler.NewPageHandler()
+
 	r := chi.NewRouter()
 
 	userHandler.Routes(r)
+	pageHandler.Routes(r)	
+
 
 	fmt.Println("Server is listening on :8008")
 	log.Fatal(http.ListenAndServe(":8008", r))

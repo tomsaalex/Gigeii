@@ -1,0 +1,221 @@
+package base
+
+templ Layout(title string, content templ.Component) {
+    <style>
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .app-wrapper {
+            display: flex;
+            width: 100%;
+            min-height: calc(100vh - 80px);
+            background: #ffffff;
+        }
+        .sidebar {
+            width: 280px;
+            padding: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 80px);
+            position: sticky;
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
+            top: 0;
+            background-color: #fff;
+        }
+        .sidebar-title {
+            color: #6a11cb;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            padding: 0 1.8rem;
+            font-size: 1.8rem; 
+        }
+        .sidebar-nav {
+            flex-grow: 1;
+        }
+        .sidebar-nav a {
+            display: block;
+            color: #333;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.1rem; 
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .sidebar-nav a:hover, .sidebar-nav a.active {
+            background-color: rgba(106, 17, 203, 0.1);
+            color: #6a11cb;
+        }
+        .content-area {
+            flex-grow: 1;
+            padding: 2rem;
+            min-height: calc(100vh - 80px);
+            overflow-y: auto;
+        }
+        .page-title {
+            color: #333;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        .page-subtitle {
+            color: #555;
+            font-weight: 500;
+            margin-bottom: 2rem;
+        }
+        .btn-custom {
+            background-color: #6a11cb;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            transition: background-color 0.3s ease;
+            border-radius: 10px;
+        }
+        .btn-custom:hover {
+            background-color: #520d99;
+        }
+        .link-custom {
+            color: #6a11cb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .link-custom:hover {
+            color: #520d99;
+            text-decoration: underline;
+        }
+        .dashboard-card {
+            border-radius: 10px;
+            background: #f8f9fa;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: box-shadow 0.3s ease;
+        }
+        .dashboard-card:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .dashboard-card-title {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+        .dashboard-card-text {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .footer {
+            width: 100%;
+            padding: 1.5rem;
+            background: #ffffff;
+            color: #666;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .footer-content {
+            width: 100%;
+            max-width: 1120px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .footer-text {
+            margin: 0;
+            font-weight: 500;
+        }
+        .footer-links a {
+            color: #6a11cb;
+            text-decoration: none;
+            margin-left: 1rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .footer-links a:hover {
+            color: #520d99;
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .sidebar-title {
+                font-size: 1.2rem;
+            }
+            .sidebar-nav a {
+                font-size: 1rem;
+            }
+            .content-area {
+                padding: 1.5rem;
+            }
+            .app-wrapper {
+                flex-direction: column;
+            }
+            .footer {
+                flex-direction: column;
+                text-align: center;
+                padding: 1rem;
+            }
+            .footer-content {
+                flex-direction: column;
+                max-width: 100%;
+            }
+            .footer-links {
+                margin-top: 0.5rem;
+            }
+            .footer-links a {
+                margin: 0 0.5rem;
+            }
+        }
+    </style>
+    <body>
+        <div class="app-wrapper">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <h4 class="sidebar-title">Gigeii Land</h4>
+                <nav class="sidebar-nav">
+                    <a href="/" class="active">Home</a>
+                    <a href="/profile">Profile</a>
+                    <a href="/activity">Availability</a>
+                    <a href="/settings">Settings</a>
+                </nav>
+                <div class="mt-auto p-3 d-flex justify-content-center">
+                    <a href="/logout" class="btn btn-custom">Logout</a>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="content-area">
+                @content
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p class="footer-text">© 2025 Gigeii. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="/privacy">Privacy Policy</a>
+                    <a href="/terms">Terms of Service</a>
+                    <a href="/contact">Contact Us</a>
+                </div>
+            </div>
+        </footer>
+
+        <script>
+            (function(){
+                'use strict';
+            })();
+        </script>
+    </body>
+}
