@@ -17,7 +17,7 @@ ALTER TABLE availabilities DROP COLUMN IF EXISTS hours;
 CREATE TABLE IF NOT EXISTS availability_hours (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     availability_id UUID NOT NULL REFERENCES availabilities(id) ON DELETE CASCADE,
-    hour INTEGER NOT NULL CHECK (hour >= 0 AND hour <= 23),
+    hour TIMESTAMPTZ NOT NULL,
     UNIQUE (availability_id, hour) -- Ensure no duplicate hours per availability
 );
 
