@@ -2,56 +2,13 @@ package pages
 
 templ LoginPage() {
     <style>
-     body {
-                background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-                font-family: 'Poppins', sans-serif;
-            }
-            .login-card {
-                border-radius: 15px;
-                border: none;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-                background: #ffffff;
-                padding: 2rem;
-                width: 400px;
-            }
-            .login-title {
-                color: #333;
-                font-weight: 700;
-                margin-bottom: 1.5rem;
-            }
-            .btn-custom {
-                background-color: #6a11cb;
-                border: none;
-                color: white;
-                font-weight: 600;
-                padding: 0.75rem;
-                transition: background-color 0.3s ease;
-            }
-            .btn-custom:hover {
-                background-color: #520d99;
-            }
-            .form-control:focus {
-                border-color: #6a11cb;
-                box-shadow: 0 0 0 0.2rem rgba(106, 17, 203, 0.25);
-            }
-            .link-custom {
-                color: #6a11cb;
-                text-decoration: none;
-                font-weight: 500;
-            }
-            .link-custom:hover {
-                color: #520d99;
-                text-decoration: underline;
-            }
-            .alert {
-                border-radius: 10px;
-                font-size: 0.9rem;
-                padding: 0.5rem 1rem;
-            }
+    body {
+        background: linear-gradient(135deg, var(--cs-violet) 0%, var(--cs-light-blue) 100%);
+    }
      </style>
     <div class="d-flex justify-content-center align-items-center vh-100">
-        <div class="login-card">
-            <h3 class="login-title text-center">Welcome</h3>
+        <div class="form-card">
+            <h3 class="form-title text-center">Welcome</h3>
             <form
                 id="login-form"
                 hx-post="/auth/login"
