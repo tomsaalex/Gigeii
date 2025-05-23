@@ -9,7 +9,6 @@ import (
 	"example.com/handler"
 	"example.com/repository"
 	"example.com/service"
-	"github.com/go-chi/chi/v5"
 )
 
 func main() {
@@ -27,11 +26,11 @@ func main() {
 
 	pageHandler := handler.NewPageHandler()
 
-	r := chi.NewRouter()
-
-	userHandler.Routes(r)
-	pageHandler.Routes(r)	
-
+	r := handler.SetupRoutes(handler.RouteDependencies{
+		UserHandler: userHandler,
+		PageHandler: pageHandler,
+		JwtHelper:   jwtHelper,
+	})
 
 	fmt.Println("Server is listening on :8008")
 	log.Fatal(http.ListenAndServe(":8008", r))
