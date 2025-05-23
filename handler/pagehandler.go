@@ -3,20 +3,15 @@ package handler
 import (
 	"context"
 	"net/http"
-	
+
 	"example.com/templates/base"
 	"example.com/templates/pages"
-	"github.com/go-chi/chi/v5"
 )
 
 type PageHandler struct{}
 
 func NewPageHandler() *PageHandler {
 	return &PageHandler{}
-}
-
-func (h *PageHandler) Routes(r chi.Router) {
-	r.Get("/", h.homePage)
 }
 
 func (h *PageHandler) homePage(w http.ResponseWriter, r *http.Request) {
