@@ -17,3 +17,15 @@ type AuthError struct {
 func (ae *AuthError) Error() string {
 	return fmt.Sprintf("AuthError: %s", ae.Message)
 }
+
+type ValidationError struct {
+	ErrorsList []string
+}
+
+func (ve *ValidationError) Error() string {
+	output := "ValidationError:"
+	for _, errMsg := range ve.ErrorsList {
+		output += errMsg + " "
+	}
+	return output
+}
