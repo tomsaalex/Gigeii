@@ -82,6 +82,33 @@ func (m *AvailabilityMapperDB) DBAvailabilityHourToTimeOfDay(
 	}
 }
 
+func (m *AvailabilityMapperDB) DBAvailabilityWithHourToAvailability(
+	availabilityWithHourRows []db.GetAvailabilityByIDRow,
+) *model.Availability {
+	modelHours := make([]model.TimeOfDay, 0)
+
+	for _, availWithHour := range availabilityWithHourRows {
+		hour := availWithHour.Hour.Time
+		timeOfDay := model.TimeOfDay{
+			Hour:   int32(hour.Hour()),
+			Minute: int32(hour.Minute()),
+		}
+		modelHours = append(modelHours, timeOfDay)
+	}
+
+	return &model.Availability{
+		ID:              availabilityWithHourRows[0].AvailabilityID.Bytes,
+		StartDate:       pgTypeToTime(availabilityWithHourRows[0].StartDate),
+		EndDate:         pgTypeToTime(availabilityWithHourRows[0].EndDate),
+		Days:            availabilityWithHourRows[0].Days,
+		Price:           availabilityWithHourRows[0].Price,
+		MaxParticipants: availabilityWithHourRows[0].MaxParticipants,
+		Precedance:      availabilityWithHourRows[0].Precedance,
+		CreatedBy:       availabilityWithHourRows[0].CreatedBy.Bytes,
+		Hours:           modelHours,
+	}
+}
+
 func (m *AvailabilityMapperDB) AvailabilityToUpdateAvailabilityParams(
 	availability model.Availability,
 ) db.UpdateAvailabilityParams {

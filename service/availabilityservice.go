@@ -21,8 +21,22 @@ func NewAvailabilityService(availabilityRepo repository.AvailabilityRepository) 
 func (s *AvailabilityService) AddAvailability(
 	ctx context.Context,
 	availability model.Availability,
+	precAvailabilityID uuid.UUID,
 ) (*model.Availability, error) {
 	// TODO: Business logic validation.
+
+	if precAvailabilityID != uuid.Nil {
+		foundAvailability, err := s.availabilityRepo.GetByID(ctx, precAvailabilityID)
+
+		if err != nil {
+			// TODO: Handle later
+		}
+
+		if foundAvailability != nil {
+
+		}
+	}
+
 	return s.availabilityRepo.Add(ctx, availability)
 }
 

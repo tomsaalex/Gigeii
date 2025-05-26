@@ -62,6 +62,19 @@ func (r *DBAvailabilityRepository) Add(
 	return modelAvailability, tx.Commit(ctx)
 }
 
+func (r *DBAvailabilityRepository) GetByID(ctx context.Context, availabilityID uuid.UUID) (*model.Availability, error) {
+	availabilityWithHourRows, err := r.queries.GetAvailabilityByID(ctx, uuidToPgtype(availabilityID))
+
+	if err != nil {
+		return nil, &EntityNotFoundError{
+			Message: fmt.Sprintf("No Availability found with ID: %s", availabilityID.String()),
+		}
+	}
+
+	modelAvailability := r.mapper.DBAvailabilityWithHourToAvailability(availabilityWithHourRows)
+	return modelAvailability, nil
+}
+
 func (r *DBAvailabilityRepository) Update(
 	ctx context.Context,
 	availability model.Availability,

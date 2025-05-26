@@ -49,7 +49,13 @@ func (h *AvailabilityHandler) addAvailability(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	_, err = h.availabilityService.AddAvailability(r.Context(), *availability)
+	precAvailabilityID, err := uuid.Parse(availabilityDTO.PrecedentAvailabilityID)
+
+	if err != nil {
+		precAvailabilityID = uuid.Nil
+	}
+
+	_, err = h.availabilityService.AddAvailability(r.Context(), *availability, precAvailabilityID)
 
 	if err != nil {
 		custalerts.MakeAlertDanger(err.Error()).Render(r.Context(), w)
