@@ -8,5 +8,6 @@ type AvailabilityDTO struct {
 	Hours                   []string `json:"hours"`
 	Price                   string   `json:"price"`
 	MaxParticipants         int32    `json:"max_participants"`
-	PrecedentAvailabilityID string   `json:"prec_availability_id, omitempty"`
+	PrecedentAvailabilityID string   `json:"prec_availability_id,omitempty"`
+	ConflictResolutionMode  bool     `json:"resolve_conflict"`
 }

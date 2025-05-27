@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"time"
 
 	"example.com/db"
@@ -30,7 +31,7 @@ func pgTypeToTime(date pgtype.Date) time.Time {
 	return date.Time
 }
 
-func timeOfDayToPgType(td model.TimeOfDay) pgtype.Timestamptz {
+func timeOfDayToPgTimestampTz(td model.TimeOfDay) pgtype.Timestamptz {
 	timestamp := time.Date(1970, 1, 1, int(td.Hour), int(td.Minute), 0, 0, time.UTC)
 	return pgtype.Timestamptz{
 		Time:  timestamp,
@@ -43,7 +44,7 @@ func (m *AvailabilityMapperDB) AvailabilityToAddAvailabilityHourParams(
 ) []db.AddAvailabilityHourParams {
 	dbAddHourParams := make([]db.AddAvailabilityHourParams, 0)
 	for _, td := range timesOfDay {
-		timestamp := timeOfDayToPgType(td)
+		timestamp := timeOfDayToPgTimestampTz(td)
 		addHourParam := db.AddAvailabilityHourParams{
 			AvailabilityID: uuidToPgtype(availabilityID),
 			Hour:           timestamp,
@@ -69,6 +70,22 @@ func (m *AvailabilityMapperDB) AvailabilityToAddAvailabilityParams(
 		CreatedBy:       uuidToPgtype(availability.CreatedBy),
 		// TODO: Actually add the duration here
 		Duration: pgtype.Interval{Months: 0, Valid: true},
+	}
+}
+
+func (m *AvailabilityMapperDB) AvailabilityToFindAvailabilityConflictsParams(
+	availability model.Availability,
+) *db.FindAvailabilityConflictsParams {
+	hours := make([]pgtype.Timestamptz, 0)
+	for _, hour := range availability.Hours {
+		hours = append(hours, timeOfDayToPgTimestampTz(hour))
+	}
+
+	return &db.FindAvailabilityConflictsParams{
+		StartDate: timeToPgtype(availability.StartDate),
+		EndDate:   timeToPgtype(availability.EndDate),
+		Days:      availability.Days,
+		Hours:     hours,
 	}
 }
 
@@ -107,6 +124,45 @@ func (m *AvailabilityMapperDB) DBAvailabilityWithHourToAvailability(
 		CreatedBy:       availabilityWithHourRows[0].CreatedBy.Bytes,
 		Hours:           modelHours,
 	}
+}
+
+func (m *AvailabilityMapperDB) AvailabilityConflictsToAvailabilities(
+	ctx context.Context,
+	dbAvailabilities []db.FindAvailabilityConflictsRow,
+) []model.Availability {
+	availabilityMap := make(map[uuid.UUID]*model.Availability)
+
+	for _, row := range dbAvailabilities {
+		availabilityID := row.ID.Bytes
+
+		if _, exists := availabilityMap[availabilityID]; !exists {
+			availabilityMap[availabilityID] = &model.Availability{
+				ID:              row.ID.Bytes,
+				StartDate:       pgTypeToTime(row.StartDate),
+				EndDate:         pgTypeToTime(row.EndDate),
+				Days:            row.Days,
+				Price:           row.Price,
+				MaxParticipants: row.MaxParticipants,
+				Precedance:      row.Precedance,
+				CreatedBy:       row.CreatedBy.Bytes,
+				Hours:           []model.TimeOfDay{},
+			}
+		}
+
+		hour := row.Hour.Time
+		timeOfDay := model.TimeOfDay{
+			Hour:   int32(hour.Hour()),
+			Minute: int32(hour.Minute()),
+		}
+		availabilityMap[availabilityID].Hours = append(availabilityMap[availabilityID].Hours, timeOfDay)
+	}
+
+	availabilities := make([]model.Availability, 0, len(availabilityMap))
+	for _, availability := range availabilityMap {
+		availabilities = append(availabilities, *availability)
+	}
+
+	return availabilities
 }
 
 func (m *AvailabilityMapperDB) AvailabilityToUpdateAvailabilityParams(

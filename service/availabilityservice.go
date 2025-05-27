@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"example.com/model"
 	"example.com/repository"
@@ -22,22 +24,46 @@ func (s *AvailabilityService) AddAvailability(
 	ctx context.Context,
 	availability model.Availability,
 	precAvailabilityID uuid.UUID,
-) (*model.Availability, error) {
+	conflictResolutionMode bool,
+) (*model.Availability, []model.Availability, error) {
 	// TODO: Business logic validation.
-
-	if precAvailabilityID != uuid.Nil {
-		foundAvailability, err := s.availabilityRepo.GetByID(ctx, precAvailabilityID)
-
-		if err != nil {
-			// TODO: Handle later
-		}
-
-		if foundAvailability != nil {
-
+	conflictingAvailabilities, err := s.availabilityRepo.GetConflictingAvailabilities(ctx, availability)
+	if err != nil {
+		var re *repository.RepositoryError
+		if errors.As(err, &re) {
+			return nil, nil, re
 		}
 	}
 
-	return s.availabilityRepo.Add(ctx, availability)
+	if len(conflictingAvailabilities) != 0 {
+		if !conflictResolutionMode {
+			return nil, conflictingAvailabilities, &UnhandledConflictError{
+				Message: "Unhandled availability conflicts found",
+			}
+		}
+
+		if precAvailabilityID != uuid.Nil {
+			foundAvailability, err := s.availabilityRepo.GetByID(ctx, precAvailabilityID)
+
+			if err != nil {
+				return nil, conflictingAvailabilities, &repository.EntityNotFoundError{
+					Message: fmt.Sprintf(
+						"Couldn't find the Availability with ID for conflict resolution: %s",
+						precAvailabilityID,
+					),
+				}
+			}
+
+			availability.Precedance = foundAvailability.Precedance + 1
+		} else {
+			availability.Precedance = 0
+		}
+
+		s.availabilityRepo.ShiftPrecedenceAbove(ctx, availability.Precedance-1)
+	}
+
+	addedAvailability, err := s.availabilityRepo.Add(ctx, availability)
+	return addedAvailability, conflictingAvailabilities, err
 }
 
 func (s *AvailabilityService) UpdateAvailability(

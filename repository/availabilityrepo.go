@@ -11,6 +11,8 @@ import (
 
 type AvailabilityRepository interface {
 	Add(ctx context.Context, availability model.Availability) (*model.Availability, error)
+	GetConflictingAvailabilities(ctx context.Context, availability model.Availability) ([]model.Availability, error)
+	ShiftPrecedenceAbove(ctx context.Context, precedenceThreshold int32) error
 	GetByID(ctx context.Context, availabilityID uuid.UUID) (*model.Availability, error)
 	Update(ctx context.Context, availability model.Availability) (*model.Availability, error)
 	Delete(ctx context.Context, availabilityID uuid.UUID) (*model.Availability, error)

@@ -6,6 +6,21 @@ INSERT INTO availabilities (
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING *;
 
+-- name: FindAvailabilityConflicts :many
+SELECT a.id, a.start_date, a.end_date, a.days, a.price, a.max_participants, a.precedance, a.created_by, a.created_at, a.updated_at, a.duration, ah.hour 
+FROM availabilities a
+JOIN availability_hours ah ON ah.availability_id = a.id
+WHERE
+  a.start_date <= @start_date
+  AND a.end_date >= @end_date
+  AND (a.days & @days) != 0
+  AND ah.hour = ANY(@hours::timestamptz[]);
+;
+
+-- name: ShiftPrecedenceAbove :exec
+UPDATE availabilities SET
+precedance = precedance + 1
+WHERE precedance > $1; 
 
 -- name: GetAvailabilityByID :many
 SELECT 

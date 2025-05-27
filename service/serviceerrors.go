@@ -29,3 +29,11 @@ func (ve *ValidationError) Error() string {
 	}
 	return output
 }
+
+type UnhandledConflictError struct {
+	Message string
+}
+
+func (e *UnhandledConflictError) Error() string {
+	return fmt.Sprintf("UnhandledConflictError: %s", e.Message)
+}

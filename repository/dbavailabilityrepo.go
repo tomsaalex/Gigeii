@@ -2,11 +2,13 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"example.com/db"
 	"example.com/model"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -60,6 +62,32 @@ func (r *DBAvailabilityRepository) Add(
 	}
 
 	return modelAvailability, tx.Commit(ctx)
+}
+
+func (r *DBAvailabilityRepository) ShiftPrecedenceAbove(ctx context.Context, precedenceThreshold int32) error {
+	return r.queries.ShiftPrecedenceAbove(ctx, precedenceThreshold)
+}
+
+func (r *DBAvailabilityRepository) GetConflictingAvailabilities(
+	ctx context.Context,
+	availability model.Availability,
+) ([]model.Availability, error) {
+	searchParams := r.mapper.AvailabilityToFindAvailabilityConflictsParams(availability)
+	conflictingAvailabilities, err := r.queries.FindAvailabilityConflicts(ctx, *searchParams)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []model.Availability{}, &EntityNotFoundError{
+				Message: "No conflicting availabilities found",
+			}
+		}
+		return nil, &RepositoryError{
+			Message: "Check for conflicting availabilities failed",
+		}
+	}
+
+	modelAvailabilities := r.mapper.AvailabilityConflictsToAvailabilities(ctx, conflictingAvailabilities)
+	return modelAvailabilities, nil
 }
 
 func (r *DBAvailabilityRepository) GetByID(ctx context.Context, availabilityID uuid.UUID) (*model.Availability, error) {

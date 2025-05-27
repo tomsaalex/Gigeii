@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"example.com/repository"
 	"example.com/service"
 	custalerts "example.com/templates/components/alerts"
 	"github.com/go-chi/chi/v5"
@@ -55,9 +56,42 @@ func (h *AvailabilityHandler) addAvailability(w http.ResponseWriter, r *http.Req
 		precAvailabilityID = uuid.Nil
 	}
 
-	_, err = h.availabilityService.AddAvailability(r.Context(), *availability, precAvailabilityID)
+	conflictResolutionMode := availabilityDTO.ConflictResolutionMode
+
+	_, conflictingAvailabilities, err := h.availabilityService.AddAvailability(
+		r.Context(),
+		*availability,
+		precAvailabilityID,
+		conflictResolutionMode,
+	)
 
 	if err != nil {
+		var re *repository.RepositoryError
+		var uce *service.UnhandledConflictError
+		var enf *repository.EntityNotFoundError
+
+		if errors.As(err, &re) {
+			w.WriteHeader(http.StatusInternalServerError)
+			custalerts.MakeAlertDanger("Server error. Failed to add Availability.").Render(r.Context(), w)
+			return
+		}
+		if errors.As(err, &uce) {
+			w.WriteHeader(http.StatusConflict)
+			conflictsDisplay := []string{"The Availability conflicts with following Availabilities:"}
+			for _, conflictAvailability := range conflictingAvailabilities {
+				conflictsDisplay = append(conflictsDisplay, conflictAvailability.ID.String())
+			}
+			custalerts.MakeMultiLineAlertDanger(conflictsDisplay).Render(r.Context(), w)
+			return
+		}
+		if errors.As(err, &enf) {
+			w.WriteHeader(http.StatusNotFound)
+			custalerts.MakeAlertDanger("The Availability offered for conflict resolution wasn't found").
+				Render(r.Context(), w)
+			return
+		}
+
+		w.WriteHeader(http.StatusInternalServerError)
 		custalerts.MakeAlertDanger(err.Error()).Render(r.Context(), w)
 		return
 	}
