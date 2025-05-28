@@ -140,13 +140,52 @@ func (h *AvailabilityHandler) updateAvailability(w http.ResponseWriter, r *http.
 		return
 	}
 
-	_, err = h.availabilityService.UpdateAvailability(r.Context(), *availability)
-	if err != nil {
-		// TODO: Handle errors here
+	precAvailabilityID, err := uuid.Parse(availabilityDTO.PrecedentAvailabilityID)
 
-		fmt.Printf("Rollback transaction: %d\n", availability.Hours[len(availability.Hours)-1].Hour)
-		w.WriteHeader(http.StatusInternalServerError)
+	if err != nil {
+		precAvailabilityID = uuid.Nil
 	}
+
+	conflictResolutionMode := availabilityDTO.ConflictResolutionMode
+
+	_, conflictingAvailabilities, err := h.availabilityService.UpdateAvailability(
+		r.Context(),
+		*availability,
+		precAvailabilityID,
+		conflictResolutionMode,
+	)
+
+	if err != nil {
+		var re *repository.RepositoryError
+		var uce *service.UnhandledConflictError
+		var enf *repository.EntityNotFoundError
+
+		if errors.As(err, &re) {
+			w.WriteHeader(http.StatusInternalServerError)
+			custalerts.MakeAlertDanger("Server error. Failed to update Availability.").Render(r.Context(), w)
+			return
+		}
+		if errors.As(err, &uce) {
+			w.WriteHeader(http.StatusConflict)
+			conflictsDisplay := []string{"The Availability conflicts with following Availabilities:"}
+			for _, conflictAvailability := range conflictingAvailabilities {
+				conflictsDisplay = append(conflictsDisplay, conflictAvailability.ID.String())
+			}
+			custalerts.MakeMultiLineAlertDanger(conflictsDisplay).Render(r.Context(), w)
+			return
+		}
+		if errors.As(err, &enf) {
+			w.WriteHeader(http.StatusNotFound)
+			custalerts.MakeAlertDanger("The Availability offered for conflict resolution wasn't found").
+				Render(r.Context(), w)
+			return
+		}
+
+		w.WriteHeader(http.StatusInternalServerError)
+		custalerts.MakeAlertDanger(err.Error()).Render(r.Context(), w)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 

@@ -20,19 +20,25 @@ type DBAvailabilityRepository struct {
 
 func (r *DBAvailabilityRepository) Add(
 	ctx context.Context,
+	qtx *db.Queries,
 	availability model.Availability,
 ) (*model.Availability, error) {
-	tx, err := r.connPool.Begin(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
+	var queries *db.Queries
+	if qtx == nil {
+		tx, err := r.connPool.Begin(ctx)
+		if err != nil {
+			return nil, err
+		}
+		defer tx.Rollback(ctx)
 
-	qtx := r.queries.WithTx(tx)
+		queries = r.queries.WithTx(tx)
+	} else {
+		queries = qtx
+	}
 
 	addAvailabilityParams := r.mapper.AvailabilityToAddAvailabilityParams(availability)
 
-	dbAvailability, err := qtx.CreateAvailability(ctx, addAvailabilityParams)
+	dbAvailability, err := queries.CreateAvailability(ctx, addAvailabilityParams)
 
 	if err != nil {
 		return nil, &RepositoryError{
@@ -48,7 +54,7 @@ func (r *DBAvailabilityRepository) Add(
 	)
 
 	for _, hour := range dbHourParams {
-		dbAvailabilityTime, err := qtx.AddAvailabilityHour(ctx, hour)
+		dbAvailabilityTime, err := queries.AddAvailabilityHour(ctx, hour)
 		if err != nil {
 			return nil, &RepositoryError{
 				Message: fmt.Sprintf("Failed to insert Availability's hours: %s", err.Error()),
@@ -61,19 +67,37 @@ func (r *DBAvailabilityRepository) Add(
 		)
 	}
 
-	return modelAvailability, tx.Commit(ctx)
+	return modelAvailability, nil
 }
 
-func (r *DBAvailabilityRepository) ShiftPrecedenceAbove(ctx context.Context, precedenceThreshold int32) error {
-	return r.queries.ShiftPrecedenceAbove(ctx, precedenceThreshold)
+func (r *DBAvailabilityRepository) ShiftPrecedenceAbove(
+	ctx context.Context,
+	qtx *db.Queries,
+	precedenceThreshold int32,
+) error {
+	var queries *db.Queries
+	if qtx == nil {
+		queries = r.queries
+	} else {
+		queries = qtx
+	}
+
+	return queries.ShiftPrecedenceAbove(ctx, precedenceThreshold)
 }
 
 func (r *DBAvailabilityRepository) GetConflictingAvailabilities(
 	ctx context.Context,
+	qtx *db.Queries,
 	availability model.Availability,
 ) ([]model.Availability, error) {
+	var queries *db.Queries
+	if qtx == nil {
+		queries = r.queries
+	} else {
+		queries = qtx
+	}
 	searchParams := r.mapper.AvailabilityToFindAvailabilityConflictsParams(availability)
-	conflictingAvailabilities, err := r.queries.FindAvailabilityConflicts(ctx, *searchParams)
+	conflictingAvailabilities, err := queries.FindAvailabilityConflicts(ctx, *searchParams)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -90,10 +114,21 @@ func (r *DBAvailabilityRepository) GetConflictingAvailabilities(
 	return modelAvailabilities, nil
 }
 
-func (r *DBAvailabilityRepository) GetByID(ctx context.Context, availabilityID uuid.UUID) (*model.Availability, error) {
-	availabilityWithHourRows, err := r.queries.GetAvailabilityByID(ctx, uuidToPgtype(availabilityID))
+func (r *DBAvailabilityRepository) GetByID(
+	ctx context.Context,
+	qtx *db.Queries,
+	availabilityID uuid.UUID,
+) (*model.Availability, error) {
+	var queries *db.Queries
+	if qtx == nil {
+		queries = r.queries
+	} else {
+		queries = qtx
+	}
 
-	if err != nil {
+	availabilityWithHourRows, err := queries.GetAvailabilityByID(ctx, uuidToPgtype(availabilityID))
+
+	if err != nil || len(availabilityWithHourRows) == 0 {
 		return nil, &EntityNotFoundError{
 			Message: fmt.Sprintf("No Availability found with ID: %s", availabilityID.String()),
 		}
@@ -105,18 +140,24 @@ func (r *DBAvailabilityRepository) GetByID(ctx context.Context, availabilityID u
 
 func (r *DBAvailabilityRepository) Update(
 	ctx context.Context,
+	qtx *db.Queries,
 	availability model.Availability,
 ) (*model.Availability, error) {
-	tx, err := r.connPool.Begin(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
+	var queries *db.Queries
+	if qtx == nil {
+		tx, err := r.connPool.Begin(ctx)
+		if err != nil {
+			return nil, err
+		}
+		defer tx.Rollback(ctx)
 
-	qtx := r.queries.WithTx(tx)
+		queries = r.queries.WithTx(tx)
+	} else {
+		queries = qtx
+	}
 
 	updateAvailabilityParams := r.mapper.AvailabilityToUpdateAvailabilityParams(availability)
-	dbAvailability, err := qtx.UpdateAvailability(ctx, updateAvailabilityParams)
+	dbAvailability, err := queries.UpdateAvailability(ctx, updateAvailabilityParams)
 	if err != nil {
 		return nil, &RepositoryError{
 			Message: fmt.Sprintf("Availability update failed unexpectedly: %s", err.Error()),
@@ -125,7 +166,7 @@ func (r *DBAvailabilityRepository) Update(
 
 	updatedAvailability := r.mapper.DBAvailabilityToAvailability(dbAvailability)
 
-	err = qtx.DeleteAvailabilityHoursForAvailability(ctx, uuidToPgtype(availability.ID))
+	err = queries.DeleteAvailabilityHoursForAvailability(ctx, uuidToPgtype(availability.ID))
 
 	if err != nil {
 		return nil, &RepositoryError{
@@ -139,7 +180,7 @@ func (r *DBAvailabilityRepository) Update(
 	)
 
 	for _, hour := range dbHourParams {
-		dbAvailabilityTime, err := qtx.AddAvailabilityHour(ctx, hour)
+		dbAvailabilityTime, err := queries.AddAvailabilityHour(ctx, hour)
 		if err != nil {
 			return nil, &RepositoryError{
 				Message: fmt.Sprintf("Failed to insert Availability's hours: %s", err.Error()),
@@ -152,11 +193,22 @@ func (r *DBAvailabilityRepository) Update(
 		)
 	}
 
-	return updatedAvailability, tx.Commit(ctx)
+	return updatedAvailability, nil
 }
 
-func (r *DBAvailabilityRepository) Delete(ctx context.Context, availabilityID uuid.UUID) (*model.Availability, error) {
-	dbAvailability, err := r.queries.DeleteAvailability(ctx, uuidToPgtype(availabilityID))
+func (r *DBAvailabilityRepository) Delete(
+	ctx context.Context,
+	qtx *db.Queries,
+	availabilityID uuid.UUID,
+) (*model.Availability, error) {
+	var queries *db.Queries
+	if qtx == nil {
+		queries = r.queries
+	} else {
+		queries = qtx
+	}
+
+	dbAvailability, err := queries.DeleteAvailability(ctx, uuidToPgtype(availabilityID))
 
 	if err != nil {
 		return nil, &RepositoryError{
@@ -167,3 +219,29 @@ func (r *DBAvailabilityRepository) Delete(ctx context.Context, availabilityID uu
 	modelAvailability := r.mapper.DBAvailabilityToAvailability(dbAvailability)
 	return modelAvailability, nil
 }
+
+/*
+func (r *DBAvailabilityRepository) WithSerializableTx(
+	ctx context.Context,
+	f func(repo AvailabilityRepository) error,
+) error {
+	tx, err := r.connPool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := r.queries.WithTx(tx)
+	txRepo := &DBAvailabilityRepository{
+		queries:  qtx,
+		connPool: r.connPool, // can be omitted
+		mapper:   r.mapper,
+	}
+
+	if err := f(txRepo); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+*/

@@ -21,7 +21,7 @@ func main() {
 
 	argonHelper := service.StandardArgon2idHash()
 	userService := service.NewUserService(userRepository, argonHelper)
-	availabilityService := service.NewAvailabilityService(availabilityRepository)
+	availabilityService := service.NewAvailabilityService(availabilityRepository, pool, queries)
 
 	jwtHelper := service.NewJwtUtil()
 	userHandler := handler.NewUserHandler(userService, jwtHelper)

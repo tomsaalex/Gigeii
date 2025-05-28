@@ -10,12 +10,18 @@ import (
 )
 
 type AvailabilityRepository interface {
-	Add(ctx context.Context, availability model.Availability) (*model.Availability, error)
-	GetConflictingAvailabilities(ctx context.Context, availability model.Availability) ([]model.Availability, error)
-	ShiftPrecedenceAbove(ctx context.Context, precedenceThreshold int32) error
-	GetByID(ctx context.Context, availabilityID uuid.UUID) (*model.Availability, error)
-	Update(ctx context.Context, availability model.Availability) (*model.Availability, error)
-	Delete(ctx context.Context, availabilityID uuid.UUID) (*model.Availability, error)
+	Add(ctx context.Context, queries *db.Queries, availability model.Availability) (*model.Availability, error)
+	GetConflictingAvailabilities(
+		ctx context.Context,
+		queries *db.Queries,
+		availability model.Availability,
+	) ([]model.Availability, error)
+	ShiftPrecedenceAbove(ctx context.Context, queries *db.Queries, precedenceThreshold int32) error
+	GetByID(ctx context.Context, queries *db.Queries, availabilityID uuid.UUID) (*model.Availability, error)
+	Update(ctx context.Context, queries *db.Queries, availability model.Availability) (*model.Availability, error)
+	Delete(ctx context.Context, queries *db.Queries, availabilityID uuid.UUID) (*model.Availability, error)
+
+	//WithTx(context.Context, func(AvailabilityRepository) error) error
 }
 
 func NewDBAvailabilityRepository(connPool *pgxpool.Pool, queries *db.Queries) AvailabilityRepository {
