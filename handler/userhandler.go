@@ -46,6 +46,7 @@ func (h *UserHandler) Routes(r chi.Router) {
 
 	r.Get("/register", h.registerPage)
 	r.Get("/login", h.loginPage)
+
 }
 
 func (h *UserHandler) registerPage(w http.ResponseWriter, r *http.Request) {
@@ -203,4 +204,20 @@ func (h *UserHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, &cookie)
 	w.Header().Set("HX-Redirect", "/")
+}
+
+func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	// Invalidate the cookie
+	cookie := http.Cookie{
+		Name:     "authCookie",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1, // Invalidate now
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	}
+	http.SetCookie(w, &cookie)
+
+	http.Redirect(w, r, "/login", http.StatusFound)
 }
