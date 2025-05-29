@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"example.com/repository"
@@ -14,12 +13,17 @@ import (
 )
 
 type AvailabilityHandler struct {
+	userService           *service.UserService
 	availabilityService   *service.AvailabilityService
 	availabilityDTOMapper *AvailabilityDTOMapper
 }
 
-func NewAvailabilityHandler(availabilityService *service.AvailabilityService) *AvailabilityHandler {
+func NewAvailabilityHandler(
+	userService *service.UserService,
+	availabilityService *service.AvailabilityService,
+) *AvailabilityHandler {
 	return &AvailabilityHandler{
+		userService:           userService,
 		availabilityService:   availabilityService,
 		availabilityDTOMapper: &AvailabilityDTOMapper{},
 	}
@@ -41,7 +45,6 @@ func (h *AvailabilityHandler) addAvailability(w http.ResponseWriter, r *http.Req
 		var valErr *service.ValidationError
 		if errors.As(err, &valErr) {
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Println(valErr)
 			custalerts.MakeMultiLineAlertDanger(valErr.ErrorsList).Render(r.Context(), w)
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -57,6 +60,22 @@ func (h *AvailabilityHandler) addAvailability(w http.ResponseWriter, r *http.Req
 	}
 
 	conflictResolutionMode := availabilityDTO.ConflictResolutionMode
+
+	ownerEmail, emailAttached := r.Context().Value(UserEmailKey).(string)
+	if !emailAttached {
+		w.WriteHeader(http.StatusUnauthorized)
+		custalerts.MakeAlertDanger("You must be authenticated to use this endpoint.").Render(r.Context(), w)
+		return
+	}
+
+	availabilityOwner, err := h.userService.GetUserByEmail(r.Context(), ownerEmail)
+	if !emailAttached {
+		w.WriteHeader(http.StatusUnauthorized)
+		custalerts.MakeAlertDanger("Cannot add an Availability for the user you are logged in as.").
+			Render(r.Context(), w)
+		return
+	}
+	availability.CreatedBy = availabilityOwner.Id
 
 	_, conflictingAvailabilities, err := h.availabilityService.AddAvailability(
 		r.Context(),
@@ -148,6 +167,22 @@ func (h *AvailabilityHandler) updateAvailability(w http.ResponseWriter, r *http.
 
 	conflictResolutionMode := availabilityDTO.ConflictResolutionMode
 
+	ownerEmail, emailAttached := r.Context().Value(UserEmailKey).(string)
+	if !emailAttached {
+		w.WriteHeader(http.StatusUnauthorized)
+		custalerts.MakeAlertDanger("You must be authenticated to use this endpoint.").Render(r.Context(), w)
+		return
+	}
+
+	availabilityOwner, err := h.userService.GetUserByEmail(r.Context(), ownerEmail)
+	if !emailAttached {
+		w.WriteHeader(http.StatusUnauthorized)
+		custalerts.MakeAlertDanger("Cannot add an Availability for the user you are logged in as.").
+			Render(r.Context(), w)
+		return
+	}
+	availability.CreatedBy = availabilityOwner.Id
+
 	_, conflictingAvailabilities, err := h.availabilityService.UpdateAvailability(
 		r.Context(),
 		*availability,
@@ -162,7 +197,9 @@ func (h *AvailabilityHandler) updateAvailability(w http.ResponseWriter, r *http.
 
 		if errors.As(err, &re) {
 			w.WriteHeader(http.StatusInternalServerError)
-			custalerts.MakeAlertDanger("Server error. Failed to update Availability.").Render(r.Context(), w)
+			// A common cause for this is if you're trying to update an availability that doesn't exist. Maybe that should get its own error.
+			custalerts.MakeAlertDanger("Server error. Failed to update Availability.").
+				Render(r.Context(), w)
 			return
 		}
 		if errors.As(err, &uce) {

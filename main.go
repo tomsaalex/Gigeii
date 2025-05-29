@@ -25,7 +25,7 @@ func main() {
 
 	jwtHelper := service.NewJwtUtil()
 	userHandler := handler.NewUserHandler(userService, jwtHelper)
-	availabilityHandler := handler.NewAvailabilityHandler(availabilityService)
+	availabilityHandler := handler.NewAvailabilityHandler(userService, availabilityService)
 	pageHandler := handler.NewPageHandler()
 
 	r := handler.SetupRoutes(handler.RouteDependencies{

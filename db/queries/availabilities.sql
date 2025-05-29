@@ -10,11 +10,12 @@ RETURNING *;
 SELECT a.id, a.start_date, a.end_date, a.days, a.price, a.max_participants, a.precedance, a.created_by, a.created_at, a.updated_at, a.duration, ah.hour 
 FROM availabilities a
 JOIN availability_hours ah ON ah.availability_id = a.id
-WHERE
+WHERE 
   a.start_date <= @start_date
   AND a.end_date >= @end_date
-  AND (a.days & @days) != 0
-  AND ah.hour = ANY(@hours::timestamptz[]);
+  AND (a.days & @days) != 0 
+  AND ah.hour = ANY(@hours::timestamptz[])
+  AND (@availability_id::uuid IS NULL OR a.id != @availability_id::uuid)
 ;
 
 -- name: ShiftPrecedenceAbove :exec

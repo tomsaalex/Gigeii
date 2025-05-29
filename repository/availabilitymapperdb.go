@@ -14,6 +14,12 @@ type AvailabilityMapperDB struct {
 }
 
 func uuidToPgtype(id uuid.UUID) pgtype.UUID {
+	if id == uuid.Nil {
+		return pgtype.UUID{
+			Valid: false,
+		}
+	}
+
 	return pgtype.UUID{
 		Bytes: id,
 		Valid: true,
@@ -58,8 +64,6 @@ func (m *AvailabilityMapperDB) AvailabilityToAddAvailabilityHourParams(
 func (m *AvailabilityMapperDB) AvailabilityToAddAvailabilityParams(
 	availability model.Availability,
 ) db.CreateAvailabilityParams {
-	// TODO: This is hardcoded to john doe until we have middleware implemented
-	availability.CreatedBy, _ = uuid.Parse("a86b062a-56ad-4805-9963-2c8b0ad79999")
 	return db.CreateAvailabilityParams{
 		StartDate:       timeToPgtype(availability.StartDate),
 		EndDate:         timeToPgtype(availability.EndDate),
@@ -82,10 +86,11 @@ func (m *AvailabilityMapperDB) AvailabilityToFindAvailabilityConflictsParams(
 	}
 
 	return &db.FindAvailabilityConflictsParams{
-		StartDate: timeToPgtype(availability.StartDate),
-		EndDate:   timeToPgtype(availability.EndDate),
-		Days:      availability.Days,
-		Hours:     hours,
+		StartDate:      timeToPgtype(availability.StartDate),
+		EndDate:        timeToPgtype(availability.EndDate),
+		Days:           availability.Days,
+		Hours:          hours,
+		AvailabilityID: uuidToPgtype(availability.ID),
 	}
 }
 
@@ -168,8 +173,6 @@ func (m *AvailabilityMapperDB) AvailabilityConflictsToAvailabilities(
 func (m *AvailabilityMapperDB) AvailabilityToUpdateAvailabilityParams(
 	availability model.Availability,
 ) db.UpdateAvailabilityParams {
-	// TODO: This is hardcoded to john doe until we have middleware implemented
-	availability.CreatedBy, _ = uuid.Parse("a86b062a-56ad-4805-9963-2c8b0ad79999")
 	return db.UpdateAvailabilityParams{
 		ID:              uuidToPgtype(availability.ID),
 		StartDate:       timeToPgtype(availability.StartDate),

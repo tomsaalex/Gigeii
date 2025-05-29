@@ -157,6 +157,7 @@ func (r *DBAvailabilityRepository) Update(
 	}
 
 	updateAvailabilityParams := r.mapper.AvailabilityToUpdateAvailabilityParams(availability)
+
 	dbAvailability, err := queries.UpdateAvailability(ctx, updateAvailabilityParams)
 	if err != nil {
 		return nil, &RepositoryError{
