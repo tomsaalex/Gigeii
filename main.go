@@ -17,21 +17,23 @@ func main() {
 	queries := db.New(pool)
 
 	userRepository := repository.NewDBUserRepository(queries)
+	availabilityRepository := repository.NewDBAvailabilityRepository(pool, queries)
 
 	argonHelper := service.StandardArgon2idHash()
 	userService := service.NewUserService(userRepository, argonHelper)
+	availabilityService := service.NewAvailabilityService(availabilityRepository, pool, queries)
 
 	jwtHelper := service.NewJwtUtil()
 	userHandler := handler.NewUserHandler(userService, jwtHelper)
-
+	availabilityHandler := handler.NewAvailabilityHandler(userService, availabilityService)
 	pageHandler := handler.NewPageHandler()
 
 	r := handler.SetupRoutes(handler.RouteDependencies{
-		UserHandler: userHandler,
-		PageHandler: pageHandler,
-		JwtHelper:   jwtHelper,
+		UserHandler:         userHandler,
+		AvailabilityHandler: availabilityHandler,
+		PageHandler:         pageHandler,
+		JwtHelper:           jwtHelper,
 	})
-
 	fmt.Println("Server is listening on :8008")
 	log.Fatal(http.ListenAndServe(":8008", r))
 }

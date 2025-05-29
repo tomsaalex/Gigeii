@@ -53,3 +53,12 @@ func (s *UserService) Login(ctx context.Context, email string, password string) 
 
 	return foundUser, nil
 }
+
+func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
+	foundUser, err := s.userRepo.GetByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+
+	return foundUser, nil
+}

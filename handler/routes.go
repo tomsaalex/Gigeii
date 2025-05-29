@@ -6,9 +6,10 @@ import (
 )
 
 type RouteDependencies struct {
-	UserHandler *UserHandler
-	PageHandler *PageHandler
-	JwtHelper   *service.JwtUtil
+	UserHandler         *UserHandler
+	AvailabilityHandler *AvailabilityHandler
+	PageHandler         *PageHandler
+	JwtHelper           *service.JwtUtil
 }
 
 func SetupRoutes(dep RouteDependencies) *chi.Mux {
@@ -30,5 +31,11 @@ func SetupRoutes(dep RouteDependencies) *chi.Mux {
 		r.With(RequireAuth(dep.JwtHelper)).Get("/", dep.PageHandler.homePage)
 	})
 
+	// Manager backend routes
+	r.Group(func(r chi.Router) {
+		r.Post("/availabilities", dep.AvailabilityHandler.addAvailability)
+		r.Put("/availabilities/{id}", dep.AvailabilityHandler.updateAvailability)
+		r.Delete("/availabilities/{id}", dep.AvailabilityHandler.deleteAvailability)
+	})
 	return r
 }

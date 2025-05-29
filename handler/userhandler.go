@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -121,8 +120,6 @@ func (h *UserHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	}
-
-	fmt.Println()
 
 	http.SetCookie(w, &cookie)
 	w.Header().Set("HX-Redirect", "/")
