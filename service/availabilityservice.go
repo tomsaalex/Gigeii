@@ -36,6 +36,7 @@ func (s *AvailabilityService) AddAvailability(
 	precAvailabilityID uuid.UUID,
 	conflictResolutionMode bool,
 ) (*model.Availability, []model.Availability, error) {
+	// TODO: This transaction should be made Serializable
 	tx, err := s.connPool.Begin(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -93,6 +94,7 @@ func (s *AvailabilityService) UpdateAvailability(
 	precAvailabilityID uuid.UUID,
 	conflictResolutionMode bool,
 ) (*model.Availability, []model.Availability, error) {
+	// TODO: This transaction should be made Serializable
 	tx, err := s.connPool.Begin(ctx)
 	if err != nil {
 		return nil, nil, err
