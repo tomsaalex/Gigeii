@@ -32,6 +32,6 @@ func main() {
 		JwtHelper:   jwtHelper,
 	})
 
-	fmt.Println("Server is listening on :8008")
+	fmt.Println("Server is listening on http://localhost:8008")
 	log.Fatal(http.ListenAndServe(":8008", r))
 }
