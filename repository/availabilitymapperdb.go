@@ -38,7 +38,7 @@ func pgTypeToTime(date pgtype.Date) time.Time {
 }
 
 func timeOfDayToPgTimestampTz(td model.TimeOfDay) pgtype.Timestamptz {
-	timestamp := time.Date(1970, 1, 1, int(td.Hour), int(td.Minute), 0, 0, time.UTC)
+	timestamp := time.Date(1970, 1, 1, int(td.Hour), int(td.Minute), 0, 0, time.Local)
 	return pgtype.Timestamptz{
 		Time:  timestamp,
 		Valid: true,
@@ -73,7 +73,8 @@ func (m *AvailabilityMapperDB) AvailabilityToAddAvailabilityParams(
 		Precedance:      availability.Precedance,
 		CreatedBy:       uuidToPgtype(availability.CreatedBy),
 		// TODO: Actually add the duration here
-		Duration: pgtype.Interval{Months: 0, Valid: true},
+		Duration: pgtype.Interval{Microseconds: int64(availability.Duration.Minutes()) * 60 * 1000000, Valid: true},
+		Notes:    pgtype.Text{String: availability.Notes, Valid: availability.Notes != ""},
 	}
 }
 
@@ -120,7 +121,7 @@ func (m *AvailabilityMapperDB) DBAvailabilityWithHourToAvailability(
 
 	return &model.Availability{
 		ID:              availabilityWithHourRows[0].AvailabilityID.Bytes,
-		StartDate:       pgTypeToTime(availabilityWithHourRows[0].StartDate),
+		StartDate:       availabilityWithHourRows[0].StartDate.Time,
 		EndDate:         pgTypeToTime(availabilityWithHourRows[0].EndDate),
 		Days:            availabilityWithHourRows[0].Days,
 		Price:           availabilityWithHourRows[0].Price,
@@ -128,6 +129,8 @@ func (m *AvailabilityMapperDB) DBAvailabilityWithHourToAvailability(
 		Precedance:      availabilityWithHourRows[0].Precedance,
 		CreatedBy:       availabilityWithHourRows[0].CreatedBy.Bytes,
 		Hours:           modelHours,
+		Duration:        time.Duration(availabilityWithHourRows[0].Duration.Microseconds) * time.Microsecond,
+		Notes:           availabilityWithHourRows[0].Notes.String,
 	}
 }
 
@@ -183,7 +186,8 @@ func (m *AvailabilityMapperDB) AvailabilityToUpdateAvailabilityParams(
 		Precedance:      availability.Precedance,
 		CreatedBy:       uuidToPgtype(availability.CreatedBy),
 		// TODO: Duration here as well
-		Duration: pgtype.Interval{Months: 0, Valid: true},
+		Duration: pgtype.Interval{Microseconds: int64(availability.Duration.Minutes()) * 60 * 1000000, Valid: true},
+		Notes:    pgtype.Text{String: availability.Notes, Valid: availability.Notes != ""},
 	}
 }
 
@@ -199,7 +203,59 @@ func (m *AvailabilityMapperDB) DBAvailabilityToAvailability(
 		MaxParticipants: dbAvailability.MaxParticipants,
 		Precedance:      dbAvailability.Precedance,
 		CreatedBy:       dbAvailability.CreatedBy.Bytes,
+		Duration:        time.Duration(dbAvailability.Duration.Microseconds) * time.Microsecond,
+		Notes:           dbAvailability.Notes.String,
 	}
 
 	return &availability
+}
+
+func (m *AvailabilityMapperDB) DBAvailabilitiesToAvailabilities(
+	dbRows []db.GetAllAvailabilitiesRow,
+) []model.Availability {
+	availabilityMap := make(map[uuid.UUID]*model.Availability)
+	for _, row := range dbRows {
+		id := row.ID
+		uuidID, err := uuid.FromBytes(id.Bytes[:])
+		if err != nil {
+			// handle error appropriately, here we panic for simplicity
+		}
+		avail, exists := availabilityMap[uuidID]
+		if !exists {
+			avail = &model.Availability{
+				ID:              uuidID,
+				StartDate:       row.StartDate.Time,
+				EndDate:         row.EndDate.Time,
+				Days:            row.Days,
+				Price:           row.Price,
+				MaxParticipants: row.MaxParticipants,
+				Precedance:      row.Precedance,
+				CreatedBy:       uuid.Must(uuid.FromBytes(row.CreatedBy.Bytes[:])),
+				Duration:        time.Duration(row.Duration.Microseconds * 1000),
+				Notes:           row.Notes.String,
+				Hours:           []model.TimeOfDay{},
+			}
+			availabilityMap[uuidID] = avail
+		}
+		// Always append the hour, if not NULL
+		if row.Hour.Valid {
+			hour := row.Hour.Time.Hour()
+			minute := row.Hour.Time.Minute()
+			avail.Hours = append(avail.Hours, model.TimeOfDay{Hour: int32(hour), Minute: int32(minute)})
+		}
+	}
+	// Flatten map to slice
+	result := make([]model.Availability, 0, len(availabilityMap))
+	for _, avail := range availabilityMap {
+		result = append(result, *avail)
+	}
+	return result
+}
+
+func (r *DBAvailabilityRepository) GetAllAvailabilities(ctx context.Context) ([]model.Availability, error) {
+	dbRows, err := r.queries.GetAllAvailabilities(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.mapper.DBAvailabilitiesToAvailabilities(dbRows), nil
 }

@@ -1,9 +1,9 @@
 -- name: CreateAvailability :one
 INSERT INTO availabilities (
    start_date, end_date,
-  days, price, max_participants, precedance, created_by, duration
+  days, price, max_participants, precedance, created_by, duration, notes
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *;
 
 -- name: FindAvailabilityConflicts :many
@@ -36,6 +36,7 @@ SELECT
  created_at,
  updated_at,
  duration,
+ notes,
  ah.id AS hour_id,
  hour
 FROM availabilities a
@@ -52,6 +53,7 @@ UPDATE availabilities SET
   precedance = $7, 
   created_by = $8, 
   duration = $9,
+  notes = $10,
   updated_at = NOW()
 WHERE id = $1
 RETURNING *;
@@ -59,3 +61,21 @@ RETURNING *;
 -- name: DeleteAvailability :one
 DELETE FROM availabilities WHERE id = $1
 RETURNING *;
+
+-- name: GetAllAvailabilities :many
+SELECT 
+    a.id,
+    a.start_date,
+    a.end_date,
+    a.days,
+    a.price,
+    a.max_participants,
+    a.precedance,
+    a.created_by,
+    a.created_at,
+    a.updated_at,
+    a.duration,
+    a.notes,
+    ah.hour
+FROM availabilities a
+LEFT JOIN availability_hours ah ON ah.availability_id = a.id;

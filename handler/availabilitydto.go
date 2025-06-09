@@ -10,4 +10,7 @@ type AvailabilityDTO struct {
 	MaxParticipants         int32    `json:"max_participants"`
 	PrecedentAvailabilityID string   `json:"prec_availability_id,omitempty"`
 	ConflictResolutionMode  bool     `json:"resolve_conflict"`
+	Duration               int32    `json:"duration"`
+    Precedance             int32    `json:"precedance"`
+	Notes                  string   `json:"notes, omitempty"` // added for additional information
 }

@@ -22,4 +22,5 @@ type Availability struct {
 	Precedance      int32
 	CreatedBy       uuid.UUID
 	Duration        time.Duration
+	Notes           string //added for additional information
 }

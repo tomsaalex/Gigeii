@@ -21,7 +21,5 @@ func (h *PageHandler) homePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandler) fullCalendarPage(w http.ResponseWriter, r *http.Request) {
-    base.PageSkeleton(pages.FullCalendarPage()).Render(context.Background(), w)
+	base.PageSkeleton(pages.FullCalendarPage()).Render(context.Background(), w)
 }
-
-
