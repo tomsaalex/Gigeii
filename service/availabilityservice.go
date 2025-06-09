@@ -153,3 +153,10 @@ func (s *AvailabilityService) DeleteAvailability(
 ) (*model.Availability, error) {
 	return s.availabilityRepo.Delete(ctx, nil, availabilityID)
 }
+func (s *AvailabilityService) GetAllAvailabilities(ctx context.Context) ([]model.Availability, error) {
+	return s.availabilityRepo.GetAllAvailabilities(ctx)
+}
+
+func (s *AvailabilityService) GetAvailabilityByID(ctx context.Context, id uuid.UUID) (*model.Availability, error) {
+	return s.availabilityRepo.GetByID(ctx, nil, id)
+}

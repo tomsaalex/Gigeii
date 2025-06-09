@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"example.com/repository"
@@ -244,4 +245,67 @@ func (h *AvailabilityHandler) deleteAvailability(w http.ResponseWriter, r *http.
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *AvailabilityHandler) getAllAvailabilities(w http.ResponseWriter, r *http.Request) {
+	availabilities, err := h.availabilityService.GetAllAvailabilities(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		custalerts.MakeAlertDanger("Failed to fetch availabilities.").Render(r.Context(), w)
+		return
+	}
+
+	response := make([]AvailabilityDTO, 0, len(availabilities))
+	for _, avail := range availabilities {
+		days := make([]int32, 0)
+		for i := 0; i < 7; i++ {
+			if avail.Days&(1<<i) != 0 {
+				days = append(days, int32(6-i)) // Convert bitmask to day indices (0=Sun, 6=Sat)
+
+			}
+		}
+		hours := make([]string, 0, len(avail.Hours))
+		for _, h := range avail.Hours {
+			hours = append(hours, fmt.Sprintf("%02d:%02d", h.Hour, h.Minute))
+		}
+		response = append(response, AvailabilityDTO{
+			AvailabilityID:          avail.ID.String(),
+			StartDate:               avail.StartDate.Format("2006-01-02"),
+			EndDate:                 avail.EndDate.Format("2006-01-02"),
+			Days:                    days,
+			Hours:                   hours,
+			Price:                   fmt.Sprintf("%d.%02d", avail.Price/100, avail.Price%100),
+			MaxParticipants:         avail.MaxParticipants,
+			Notes:                   avail.Notes, // Include if notes are added to AvailabilityDTO
+			ConflictResolutionMode:  false,       // Default value
+			PrecedentAvailabilityID: "",          // Default empty
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *AvailabilityHandler) getAvailabilityByID(w http.ResponseWriter, r *http.Request) {
+	availabilityIDString := chi.URLParam(r, "id")
+	availabilityID, err := uuid.Parse(availabilityIDString)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		custalerts.MakeAlertDanger("Couldn't process Availability ID").Render(r.Context(), w)
+		return
+	}
+
+	avail, err := h.availabilityService.GetAvailabilityByID(r.Context(), availabilityID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		custalerts.MakeAlertDanger("Availability not found").Render(r.Context(), w)
+		return
+	}
+
+	// Map model to DTO
+	dto := h.availabilityDTOMapper.AvailabilityToDTO(avail)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(dto)
 }

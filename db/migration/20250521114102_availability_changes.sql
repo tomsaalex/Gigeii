@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS availability_hours (
 
 ALTER TABLE availabilities ADD COLUMN duration INTERVAL;
 
+ALTER TABLE availabilities ADD COLUMN notes TEXT;
+
+
 -- +goose Down
 -- SQL section to rollback the migration
 
@@ -30,3 +33,6 @@ ALTER TABLE availabilities ADD COLUMN duration INTERVAL;
 DROP TABLE IF EXISTS availability_hours;
 
 ALTER TABLE availabilities DROP COLUMN IF EXISTS duration;
+
+
+ALTER TABLE availabilities DROP COLUMN IF EXISTS notes;

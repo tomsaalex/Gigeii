@@ -3,82 +3,522 @@ package pages
 import "example.com/templates/base"
 
 templ FullCalendarPage() {
-    @base.ThemingCalendar()
+	@base.ThemingCalendar()
+		
+		<body>
+			<div id="custom-modal" class="modal-overlay">
+				<div class="modal-content">
+					<h4 id="modal-title">Message</h4>
+					<p id="modal-message">This is a message.</p>
+					<div id="modal-actions" class="modal-actions">
+						<button id="modal-ok-btn" class="btn btn-primary">OK</button>
+						<button id="modal-confirm-btn" class="btn btn-primary" style="display: none;">Confirm</button>
+						<button id="modal-cancel-btn" class="btn btn-outline-secondary" style="display: none;">Cancel</button>
+					</div>
+				</div>
+			</div>
 
-    <div class="container-fluid">
-        <h1 class="page-main-title">Availability Calendar</h1>
-        <div class="calendar-wrapper mb-4">
-            <div id="calendar"></div>
-        </div>
-    </div>
+			<div class="page-container">
+				<div class="calendar-column">
+					<div class="container-fluid">
+						<h1 class="page-main-title">Availability Calendar</h1>
+						<div class="calendar-wrapper mb-4">
+							<div id="no-availabilities-message" style="display: none;">
+								No availabilities scheduled yet. Click on a date to add one!
+							</div>
+							<div id="calendar"></div>
+						</div>
+					</div>
+				</div>
+				<div class="panel-column">
+					<div id="availability-panel" style="display: none;">
+						<button type="button" class="panel-close-btn" id="close-panel-btn" aria-label="Close">&times;</button>
+						<h3 id="panel-title">Manage Availability</h3>
+						<form id="availability-form">
+							<input type="hidden" id="availability-id"/>
+							<input type="hidden" id="clicked-date-iso"/>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var calendarEl = document.getElementById('calendar');
-            if (!calendarEl) {
-                console.error("Fatal Error: Calendar element with ID 'calendar' not found.");
-                return;
+							<div class="row">
+								<div class="col-md-6 mb-2">
+									<label for="start-date" class="form-label">Start Date</label>
+									<input type="date" class="form-control" id="start-date" required/>
+								</div>
+								<div class="col-md-6 mb-2">
+									<label for="end-date" class="form-label">End Date (Optional)</label>
+									<input type="date" class="form-control" id="end-date"/>
+								</div>
+							</div>
+
+							<div class="mb-2">
+								<label class="form-label d-block">Days of the Week</label>
+								<div class="selection-helpers mb-1">
+									<div class="btn-group btn-group-sm" role="group" aria-label="Day selection helpers">
+										<button type="button" class="btn btn-outline-secondary btn-sm-extra" id="select-all-days">All</button>
+										<button type="button" class="btn btn-outline-secondary btn-sm-extra" id="select-weekdays">Weekdays</button>
+										<button type="button" class="btn btn-outline-secondary btn-sm-extra" id="select-weekend">Weekend</button>
+										<button type="button" class="btn btn-outline-secondary btn-sm-extra" id="clear-all-days">Clear</button>
+									</div>
+								</div>
+								<div class="days-of-week-group">
+									<div class="form-check"><input class="form-check-input" type="checkbox" id="day-sun" value="0"/><label class="form-check-label" for="day-sun">Sun</label></div>
+									<div class="form-check"><input class="form-check-input" type="checkbox" id="day-mon" value="1"/><label class="form-check-label" for="day-mon">Mon</label></div>
+									<div class="form-check"><input class="form-check-input" type="checkbox" id="day-tue" value="2"/><label class="form-check-label" for="day-tue">Tue</label></div>
+									<div class="form-check"><input class="form-check-input" type="checkbox" id="day-wed" value="3"/><label class="form-check-label" for="day-wed">Wed</label></div>
+									<div class="form-check"><input class="form-check-input" type="checkbox" id="day-thu" value="4"/><label class="form-check-label" for="day-thu">Thu</label></div>
+									<div class="form-check"><input class="form-check-input" type="checkbox" id="day-fri" value="5"/><label class="form-check-label" for="day-fri">Fri</label></div>
+									<div class="form-check"><input class="form-check-input" type="checkbox" id="day-sat" value="6"/><label class="form-check-label" for="day-sat">Sat</label></div>
+								</div>
+							</div>
+							<div class="mb-2">
+								<label class="form-label d-block">Hours (Start Times)</label>
+								<div class="selection-helpers mb-1">
+									<div class="btn-group btn-group-sm" role="group" aria-label="Hour selection helpers">
+										<button type="button" class="btn btn-outline-secondary btn-sm-extra" id="select-all-hours">All</button>
+										<button type="button" class="btn btn-outline-secondary btn-sm-extra" id="select-morning-hours">Morning</button>
+										<button type="button" class="btn btn-outline-secondary btn-sm-extra" id="select-afternoon-hours">Afternoon</button>
+										<button type="button" class="btn btn-outline-secondary btn-sm-extra" id="select-evening-hours">Evening</button>
+										<button type="button" class="btn btn-outline-secondary btn-sm-extra" id="clear-all-hours">Clear</button>
+									</div>
+								</div>
+								<div id="hours-selection" class="hours-selection-group">
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-6 mb-2">
+									<label for="price" class="form-label">Price</label>
+									<input type="number" class="form-control" id="price" min="0" value="0" step="0.01" required/>
+								</div>
+								<div class="col-md-6 mb-2">
+									<label for="max-participants" class="form-label">Max Participants</label>
+									<input type="number" class="form-control" id="max-participants" min="1" value="1" required/>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-6 mb-2">
+									<label for="duration" class="form-label">Duration (minutes)</label>
+									<input type="number" class="form-control" id="duration" min="15" value="60" step="15" required/>
+								</div>
+								<div class="col-md-6 mb-2">
+									<label for="precedence" class="form-label">Precedence</label>
+									<input type="number" class="form-control" id="precedence" value="0" placeholder="0 for normal, higher to override"/>
+								</div>
+							</div>
+							<div class="mb-2">
+								<label for="availability-notes" class="form-label">Notes (Optional)</label>
+								<div class="notes-field-group">
+									<textarea id="availability-notes" class="form-control" rows="2"></textarea>
+								</div>
+							</div>
+							<div class="panel-actions">
+								<button type="submit" class="btn btn-primary flex-grow-1">Save Availability</button>
+								<button type="button" id="delete-availability-btn" class="btn btn-danger" style="display:none;">Delete</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+
+			<script>
+				function toLocalISOStringWithOffset(date) {
+   				 const pad = n => String(n).padStart(2, '0');
+   				 const year = date.getFullYear();
+   				 const month = pad(date.getMonth() + 1);
+   				 const day = pad(date.getDate());
+   				 const hour = pad(date.getHours());
+   				 const minute = pad(date.getMinutes());
+  				 const second = pad(date.getSeconds());
+  				 const offset = -date.getTimezoneOffset();
+  				 const sign = offset >= 0 ? '+' : '-';
+   				 const absOffset = Math.abs(offset);
+  				 const offsetHour = pad(Math.floor(absOffset / 60));
+   				 const offsetMin = pad(absOffset % 60);
+    			return `${year}-${month}-${day}T${hour}:${minute}:${second}${sign}${offsetHour}:${offsetMin}`;
+}
+
+
+				// --- CONFIGURATION ---
+				const API_URL = '/availabilities'; //  API endpoint for availabilities
+
+				// --- DOM ELEMENTS & STATE ---
+				const availabilityPanelEl = document.getElementById('availability-panel');
+				const calendarEl = document.getElementById('calendar');
+				const noAvailabilitiesMessageEl = document.getElementById('no-availabilities-message');
+				let fcCalendar = null; // FullCalendar instance
+				let currentAvailabilitiesData = []; // Holds data fetched from the server
+
+				// --- MODAL DIALOG LOGIC ---
+				function showModal(message, title = "Notice", isHtml = false, onConfirm = null) {
+					const modal = document.getElementById('custom-modal');
+					const okBtn = document.getElementById('modal-ok-btn');
+					const confirmBtn = document.getElementById('modal-confirm-btn');
+					const cancelBtn = document.getElementById('modal-cancel-btn');
+
+					document.getElementById('modal-title').innerText = title;
+					if (isHtml) {
+						document.getElementById('modal-message').innerHTML = message;
+					} else {
+						document.getElementById('modal-message').textContent = message;
+					}
+
+					const isConfirmDialog = !!onConfirm;
+					okBtn.style.display = isConfirmDialog ? 'none' : 'inline-block';
+					confirmBtn.style.display = isConfirmDialog ? 'inline-block' : 'none';
+					cancelBtn.style.display = isConfirmDialog ? 'inline-block' : 'none';
+
+					const close = () => modal.classList.remove('show');
+
+					okBtn.onclick = close;
+					cancelBtn.onclick = close;
+					confirmBtn.onclick = () => {
+						close();
+						onConfirm(); 
+					};
+
+					modal.classList.add('show');
+				}
+
+				// --- DATA TRANSFORMATION UTILITIES ---
+				function hourIndexToTimeString(index) { 
+					const hour = Math.floor(index / 2);
+					const minute = (index % 2) * 30;
+					return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+				}
+
+				function timeStringToHourIndices(hoursArray = []) { 
+					if (!Array.isArray(hoursArray)) return [];
+					return hoursArray.map(hourStr => {
+						if (typeof hourStr !== 'string' || !hourStr.includes(':')) return -1; 
+						const [hour, minute] = hourStr.split(':').map(Number);
+						if (isNaN(hour) || isNaN(minute)) return -1;
+						return hour * 2 + (minute === 30 ? 1 : 0);
+					}).filter(index => index !== -1); 
+				}
+
+
+				// --- PANEL & FORM HELPERS ---
+				function openPanel(title) {
+					document.getElementById('panel-title').innerText = title;
+					availabilityPanelEl.style.display = 'flex'; 
+					availabilityPanelEl.classList.add('open');
+				}
+
+				function closePanel() {
+					availabilityPanelEl.style.display = 'none'; 
+					availabilityPanelEl.classList.remove('open');
+					document.querySelectorAll('.fc-day-selected-frame').forEach(el => el.classList.remove('fc-day-selected-frame'));
+				}
+				
+				function clearAndFocusSelectedDate(dateStr) {
+					document.querySelectorAll('.fc-day-selected-frame').forEach(el => el.classList.remove('fc-day-selected-frame'));
+					const dayCell = document.querySelector(`.fc-daygrid-day[data-date="${dateStr}"] .fc-daygrid-day-frame`);
+					if (dayCell) {
+						dayCell.classList.add('fc-day-selected-frame');
+					}
+				}
+
+				function resetAndOpenPanelForCreate(dateStr) {
+					openPanel("Add New Availability");
+					const form = document.getElementById('availability-form');
+					form.reset(); 
+					
+					document.querySelectorAll('.days-of-week-group .form-check-input').forEach(cb => cb.checked = false);
+					document.querySelectorAll('.hours-selection-group .form-check-input').forEach(cb => cb.checked = false);
+
+					document.getElementById('availability-id').value = '';
+					document.getElementById('start-date').value = dateStr;
+					document.getElementById('end-date').value = dateStr; 
+					document.getElementById('price').value = "0";
+					document.getElementById('max-participants').value = "1";
+					document.getElementById('duration').value = "60";
+					document.getElementById('precedence').value = "0";
+					document.getElementById('availability-notes').value = "";
+					document.getElementById('delete-availability-btn').style.display = 'none';
+					clearAndFocusSelectedDate(dateStr);
+				}
+
+				function populatePanelForEdit(availability) {
+					if (!availability) {
+						showModal("Could not load availability details.", "Error");
+						return;
+					}
+					openPanel("Edit Availability");
+					document.getElementById('availability-id').value = availability.id || availability.availability_id || '';
+					document.getElementById('start-date').value = availability.start_date || '';
+					document.getElementById('end-date').value = availability.end_date || availability.start_date || '';
+					document.getElementById('price').value = availability.price?.toString() || "0";
+					document.getElementById('max-participants').value = availability.max_participants?.toString() || "1";
+					document.getElementById('duration').value = availability.duration?.toString() || "60";
+					document.getElementById('precedence').value = availability.precedence?.toString() || "0"; 
+					document.getElementById('availability-notes').value = availability.notes || "";
+
+					document.querySelectorAll('.days-of-week-group .form-check-input').forEach(cb => {
+						cb.checked = (availability.days || []).includes(parseInt(cb.value));
+					});
+
+					const hourIndicesToSelect = timeStringToHourIndices(availability.hours || []);
+					document.querySelectorAll('.hours-selection-group .form-check-input').forEach(cb => {
+						cb.checked = hourIndicesToSelect.includes(parseInt(cb.value));
+					});
+					
+					document.getElementById('delete-availability-btn').style.display = 'inline-block';
+					if(availability.start_date) clearAndFocusSelectedDate(availability.start_date);
+				}
+
+				// --- BACKEND COMMUNICATION (CRUD) ---
+				async function loadAvailabilitiesFromServer() {
+					try {
+						const response = await fetch(API_URL);
+						if (!response.ok) throw new Error(`Server responded with ${response.status}. ${await response.text()}`);
+						
+						const data = await response.json();
+						if (!Array.isArray(data)) {
+							console.error("API did not return an array:", data);
+							currentAvailabilitiesData = []; 
+						} else {
+							currentAvailabilitiesData = data.map(item => ({
+								...item,
+								id: item.id || item.availability_id 
+							}));
+						}
+						fcCalendar.refetchEvents();
+						noAvailabilitiesMessageEl.style.display = currentAvailabilitiesData.length === 0 ? 'block' : 'none';
+					} catch (error) {
+						console.error("Failed to load availabilities:", error);
+						showModal(`Could not load data from the server. ${error.message}`, "Error", error.message.includes('<'));
+						currentAvailabilitiesData = []; 
+						fcCalendar.refetchEvents(); 
+						noAvailabilitiesMessageEl.style.display = 'block';
+					}
+				}
+
+				async function handleFormSubmit(event) {
+
+					event.preventDefault();
+					const id = document.getElementById('availability-id').value;
+					const method = id ? 'PUT' : 'POST';
+					const url = id ? `${API_URL}/${id}` : API_URL;
+
+					const checkedDayInputs = document.querySelectorAll('.days-of-week-group .form-check-input:checked');
+					const checkedHourInputs = document.querySelectorAll('.hours-selection-group .form-check-input:checked');
+					const startDateValue = document.getElementById('start-date').value;
+					const endDateValue = document.getElementById('end-date').value || startDateValue; 
+					const selectedHours = Array.from(checkedHourInputs).map(cb => hourIndexToTimeString(parseInt(cb.value)));
+					console.log("Form submit selected hours:", selectedHours);
+					if (!startDateValue) return showModal("Start date is required.", "Validation Error");
+					if (checkedDayInputs.length === 0) return showModal("Please select at least one day of the week.", "Validation Error");
+					if (checkedHourInputs.length === 0) return showModal("Please select at least one hour.", "Validation Error");
+					if (new Date(endDateValue) < new Date(startDateValue)) return showModal("End date cannot be before start date.", "Validation Error");
+
+					const payload = {
+						availability_id: id || undefined, 
+						start_date: startDateValue,
+						end_date: endDateValue,
+						days: Array.from(checkedDayInputs).map(cb => parseInt(cb.value)),
+						hours: Array.from(checkedHourInputs).map(cb => hourIndexToTimeString(parseInt(cb.value))),
+						price: document.getElementById('price').value.toString(), 
+						max_participants: parseInt(document.getElementById('max-participants').value),
+						duration: parseInt(document.getElementById('duration').value),
+						precedence: parseInt(document.getElementById('precedence').value), 
+						notes: document.getElementById('availability-notes').value,
+						resolve_conflict: true, 
+						prec_availability_id: null 
+					};
+
+					try {
+						const response = await fetch(url, {
+							method: method,
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify(payload)
+						});
+
+						if (response.ok) {
+							showModal(`Availability successfully ${id ? 'updated' : 'created'}.`, "Success");
+							closePanel();
+							await loadAvailabilitiesFromServer(); 
+						} else {
+							const errorBody = await response.text(); 
+							showModal(errorBody, `Error (${response.status})`, true); 
+						}
+					} catch (error) {
+						console.error("Failed to save availability:", error);
+						showModal(`An unexpected network error occurred: ${error.message}. Check console for details.`, "Network Error");
+					}
+				}
+
+				async function handleDelete() {
+					const id = document.getElementById('availability-id').value;
+					if (!id) return;
+
+					showModal("Are you sure you want to delete this availability?", "Confirm Deletion", false, async () => {
+						try {
+							const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+							if (response.ok) {
+								showModal("Availability deleted successfully.", "Success");
+								closePanel();
+								await loadAvailabilitiesFromServer(); 
+							} else {
+								const errorBody = await response.text();
+								showModal(errorBody, `Error (${response.status})`, true);
+							}
+						} catch (error) {
+							console.error("Failed to delete availability:", error);
+							showModal(`An unexpected network error occurred: ${error.message}. Check console.`, "Network Error");
+						}
+					});
+				}
+
+				// --- INITIALIZATION ---
+				document.addEventListener('DOMContentLoaded', async function() {
+					const hoursContainer = document.getElementById('hours-selection');
+					hoursContainer.innerHTML = ''; 
+					for (let i = 0; i < 48; i++) { 
+						const timeString = hourIndexToTimeString(i);
+						const div = document.createElement('div');
+						div.className = 'form-check';
+						div.innerHTML = `
+							<input class="form-check-input" type="checkbox" id="hour-idx-${i}" value="${i}">
+							<label class="form-check-label" for="hour-idx-${i}">${timeString}</label>
+						`;
+						hoursContainer.appendChild(div);
+					}
+					
+					document.getElementById('close-panel-btn').addEventListener('click', closePanel);
+					document.getElementById('availability-form').addEventListener('submit', handleFormSubmit);
+					document.getElementById('delete-availability-btn').addEventListener('click', handleDelete);
+
+					document.getElementById('select-all-days').addEventListener('click', () => document.querySelectorAll('.days-of-week-group .form-check-input').forEach(cb => cb.checked = true));
+					document.getElementById('clear-all-days').addEventListener('click', () => document.querySelectorAll('.days-of-week-group .form-check-input').forEach(cb => cb.checked = false));
+					document.getElementById('select-weekdays').addEventListener('click', () => {
+						document.querySelectorAll('.days-of-week-group .form-check-input').forEach(cb => {
+							const dayVal = parseInt(cb.value);
+							cb.checked = (dayVal >= 1 && dayVal <= 5); 
+						});
+					});
+					document.getElementById('select-weekend').addEventListener('click', () => {
+						document.querySelectorAll('.days-of-week-group .form-check-input').forEach(cb => {
+							const dayVal = parseInt(cb.value);
+							cb.checked = (dayVal === 0 || dayVal === 6); 
+						});
+					});
+
+					document.getElementById('select-all-hours').addEventListener('click', () => document.querySelectorAll('.hours-selection-group .form-check-input').forEach(cb => cb.checked = true));
+					document.getElementById('clear-all-hours').addEventListener('click', () => document.querySelectorAll('.hours-selection-group .form-check-input').forEach(cb => cb.checked = false));
+					document.getElementById('select-morning-hours').addEventListener('click', () => { 
+						document.querySelectorAll('.hours-selection-group .form-check-input').forEach(cb => {
+							const hourIdx = parseInt(cb.value);
+							cb.checked = (hourIdx >= 16 && hourIdx < 24);
+						});
+					});
+					document.getElementById('select-afternoon-hours').addEventListener('click', () => { 
+						document.querySelectorAll('.hours-selection-group .form-check-input').forEach(cb => {
+							const hourIdx = parseInt(cb.value);
+							cb.checked = (hourIdx >= 24 && hourIdx < 34);
+						});
+					});
+					document.getElementById('select-evening-hours').addEventListener('click', () => { 
+						document.querySelectorAll('.hours-selection-group .form-check-input').forEach(cb => {
+							const hourIdx = parseInt(cb.value);
+							cb.checked = (hourIdx >= 34 && hourIdx < 42);
+						});
+					});
+
+					fcCalendar = new FullCalendar.Calendar(calendarEl, {
+						initialView: 'dayGridMonth',
+						headerToolbar: {
+							left: 'prev,next today',
+							center: 'title',
+							right: 'dayGridMonth,timeGridWeek,timeGridDay' 
+						},
+						timeZone: 'local',
+						firstDay: 1, // ADDED: Week starts on Monday (0=Sun, 1=Mon)
+						navLinks: true, 
+						navLinkDayClick: function(date, jsEvent) {
+							// Custom behavior for day number click
+							if (fcCalendar.view.type === 'dayGridMonth' || fcCalendar.view.type === 'timeGridWeek') {
+								fcCalendar.changeView('timeGridDay', date);
+							}
+							
+						},
+						dateClick: (info) => { // For clicking the cell background
+							resetAndOpenPanelForCreate(info.dateStr);
+						},
+						eventClick: async (info) => {
+							try {
+								const eventId = info.event.id; 
+								const response = await fetch(`${API_URL}/${eventId}`);
+								if (!response.ok) throw new Error(`Server responded with ${response.status}. ${await response.text()}`);
+								const availabilityToEdit = await response.json();
+								populatePanelForEdit(availabilityToEdit);
+							} catch (error) {
+								console.error("Failed to fetch availability for editing:", error);
+								showModal(`Could not load data for this event. ${error.message}`, "Error", error.message.includes('<'));
+							}
+						},
+						events: (fetchInfo, successCallback, failureCallback) => {
+    const events = [];
+    if (currentAvailabilitiesData && currentAvailabilitiesData.length > 0) {
+        noAvailabilitiesMessageEl.style.display = 'none';
+        currentAvailabilitiesData.forEach(avail => {
+            // Parse start/end date parts from strings (YYYY-MM-DD)
+            let [startYear, startMonth, startDay] = avail.start_date.split('-').map(Number);
+            let [endYear, endMonth, endDay] = (avail.end_date || avail.start_date).split('-').map(Number);
+
+            let currentDayIter = new Date(startYear, startMonth - 1, startDay);
+            let loopEndDate = new Date(endYear, endMonth - 1, endDay);
+
+            while (currentDayIter <= loopEndDate) {
+                // Make a copy for safety!
+                const eventDay = new Date(
+                    currentDayIter.getFullYear(),
+                    currentDayIter.getMonth(),
+                    currentDayIter.getDate()
+                );
+
+                const dayOfWeek = eventDay.getDay(); // 0 (Sun) to 6 (Sat)
+                if ((avail.days || []).includes(dayOfWeek)) {
+                    (avail.hours || []).forEach(hourStr => {
+                        const [hour, minute] = hourStr.split(':').map(Number);
+                        const startDateTime = new Date(
+                            eventDay.getFullYear(),
+                            eventDay.getMonth(),
+                            eventDay.getDate(),
+                            hour, minute, 0
+                        );
+                        const durationMinutes = avail.duration || 60;
+                        const endDateTime = new Date(startDateTime.getTime() + durationMinutes * 60000);
+
+                        events.push({
+                            id: avail.id,
+                            title: avail.notes || `Slot`,
+                            start: startDateTime,
+                            end: endDateTime,
+                            allDay: false,
+                        });
+                    });
+                }
+                // Only mutate the iterator, not the event day!
+                currentDayIter.setDate(currentDayIter.getDate() + 1);
             }
-            let currentSelectedDayFrame = null;
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                firstDay: 1,
-                fixedWeekCount: false,
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                },
-                height: 'auto',
-                aspectRatio: 1.65,
-                navLinks: true,
-                selectable: false,
-                editable: false,
-                dateClick: function(info) {
-                    if (currentSelectedDayFrame) {
-                        currentSelectedDayFrame.classList.remove('fc-day-selected-frame');
-                    }
-                    if (info.dayEl) {
-                        const dayFrame = info.dayEl.querySelector('.fc-daygrid-day-frame');
-                        if (dayFrame) {
-                            dayFrame.classList.add('fc-day-selected-frame');
-                            currentSelectedDayFrame = dayFrame;
-                        }
-                    }
-                },
-                dayCellDidMount: function(arg) {
-                    const dateStr = arg.date.toISOString().slice(0,10);
-                    const currentCalendarDate = calendar.getDate();
-                    const currentYear = currentCalendarDate.getFullYear();
-                    const currentMonth = currentCalendarDate.getMonth() + 1;
-                    
-                    const exampleAvailableDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-10`;
-                    const examplePartialDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-15`;
-                    const exampleBookedDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-20`;
-
-                    if (dateStr === exampleAvailableDate) {
-                        arg.el.classList.add('available');
-                    } else if (dateStr === examplePartialDate) {
-                        arg.el.classList.add('partial');
-                    } else if (dateStr === exampleBookedDate) {
-                        arg.el.classList.add('day-booked');
-                    }
-                },
-                eventClick: function(info) {
-                    alert('Event: ' + info.event.title);
-                    info.jsEvent.preventDefault();
-                },
-                events: function(fetchInfo, successCallback, failureCallback) {
-                    successCallback([]); 
-                },
-                eventTimeFormat: {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    meridiem: 'short'
-                },
-                displayEventEnd: true,
-            });
-            calendar.render();
         });
-    </script>
+    } else {
+        noAvailabilitiesMessageEl.style.display = 'block';
+    }
+    console.log('FullCalendar events:', events);
+    successCallback(events);
+},
+
+
+						height: 'auto',
+						contentHeight: 'auto',
+						dayMaxEvents: true, 
+						editable: false, 
+						selectable: true, 
+						selectMirror: true,
+					});
+
+					fcCalendar.render();
+					await loadAvailabilitiesFromServer(); 
+				});
+			</script>
+		</body>
 }

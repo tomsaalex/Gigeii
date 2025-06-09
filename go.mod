@@ -4,7 +4,10 @@ go 1.24.0
 
 require github.com/jackc/pgx/v5 v5.7.4
 
-require golang.org/x/sys v0.33.0 // indirect
+require (
+	github.com/go-chi/cors v1.2.1 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+)
 
 require (
 	github.com/a-h/templ v0.3.865 // indirect

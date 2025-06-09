@@ -33,8 +33,11 @@ func SetupRoutes(dep RouteDependencies) *chi.Mux {
 
 	})
 
+
 	// Manager backend routes
 	r.Group(func(r chi.Router) {
+		r.Get("/availabilities", dep.AvailabilityHandler.getAllAvailabilities) 
+		r.Get("/availabilities/{id}", dep.AvailabilityHandler.getAvailabilityByID)
 		r.Post("/availabilities", dep.AvailabilityHandler.addAvailability)
 		r.Put("/availabilities/{id}", dep.AvailabilityHandler.updateAvailability)
 		r.Delete("/availabilities/{id}", dep.AvailabilityHandler.deleteAvailability)
