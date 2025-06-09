@@ -28,6 +28,8 @@ func SetupRoutes(dep RouteDependencies) *chi.Mux {
 	// Protected home page
 	r.Group(func(r chi.Router) {
 		r.With(RequireAuth(dep.JwtHelper)).Get("/", dep.PageHandler.homePage)
+		r.With(RequireAuth(dep.JwtHelper)).Get("/calendar", dep.PageHandler.fullCalendarPage)
+
 	})
 
 	return r

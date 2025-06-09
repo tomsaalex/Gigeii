@@ -1,0 +1,84 @@
+package pages
+
+import "example.com/templates/base"
+
+templ FullCalendarPage() {
+    @base.ThemingCalendar()
+
+    <div class="container-fluid">
+        <h1 class="page-main-title">Availability Calendar</h1>
+        <div class="calendar-wrapper mb-4">
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            if (!calendarEl) {
+                console.error("Fatal Error: Calendar element with ID 'calendar' not found.");
+                return;
+            }
+            let currentSelectedDayFrame = null;
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                firstDay: 1,
+                fixedWeekCount: false,
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                height: 'auto',
+                aspectRatio: 1.65,
+                navLinks: true,
+                selectable: false,
+                editable: false,
+                dateClick: function(info) {
+                    if (currentSelectedDayFrame) {
+                        currentSelectedDayFrame.classList.remove('fc-day-selected-frame');
+                    }
+                    if (info.dayEl) {
+                        const dayFrame = info.dayEl.querySelector('.fc-daygrid-day-frame');
+                        if (dayFrame) {
+                            dayFrame.classList.add('fc-day-selected-frame');
+                            currentSelectedDayFrame = dayFrame;
+                        }
+                    }
+                },
+                dayCellDidMount: function(arg) {
+                    const dateStr = arg.date.toISOString().slice(0,10);
+                    const currentCalendarDate = calendar.getDate();
+                    const currentYear = currentCalendarDate.getFullYear();
+                    const currentMonth = currentCalendarDate.getMonth() + 1;
+                    
+                    const exampleAvailableDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-10`;
+                    const examplePartialDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-15`;
+                    const exampleBookedDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-20`;
+
+                    if (dateStr === exampleAvailableDate) {
+                        arg.el.classList.add('available');
+                    } else if (dateStr === examplePartialDate) {
+                        arg.el.classList.add('partial');
+                    } else if (dateStr === exampleBookedDate) {
+                        arg.el.classList.add('day-booked');
+                    }
+                },
+                eventClick: function(info) {
+                    alert('Event: ' + info.event.title);
+                    info.jsEvent.preventDefault();
+                },
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    successCallback([]); 
+                },
+                eventTimeFormat: {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    meridiem: 'short'
+                },
+                displayEventEnd: true,
+            });
+            calendar.render();
+        });
+    </script>
+}
