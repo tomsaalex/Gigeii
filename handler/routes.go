@@ -7,6 +7,7 @@ import (
 
 type RouteDependencies struct {
 	UserHandler         *UserHandler
+	ResellerHandler	 *ResellerHandler
 	AvailabilityHandler *AvailabilityHandler
 	PageHandler         *PageHandler
 	JwtHelper           *service.JwtUtil
@@ -15,6 +16,9 @@ type RouteDependencies struct {
 func SetupRoutes(dep RouteDependencies) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(JWTContextMiddleware(dep.JwtHelper))
+	if dep.ResellerHandler != nil {
+		dep.ResellerHandler.Routes(r)
+	}
 
 	// Guest-only (login/register)
 	r.Group(func(r chi.Router) {

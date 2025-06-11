@@ -28,8 +28,14 @@ func main() {
 	availabilityHandler := handler.NewAvailabilityHandler(userService, availabilityService)
 	pageHandler := handler.NewPageHandler()
 
+
+	resellerRepo:= repository.NewDbResellerRepository(queries)
+	resellerService := service.NewResellerService(resellerRepo)
+	resellerHandler := handler.NewResellerHandler(resellerService)
+
 	r := handler.SetupRoutes(handler.RouteDependencies{
 		UserHandler:         userHandler,
+		ResellerHandler:     resellerHandler,
 		AvailabilityHandler: availabilityHandler,
 		PageHandler:         pageHandler,
 		JwtHelper:           jwtHelper,
