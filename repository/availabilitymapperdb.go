@@ -111,13 +111,15 @@ func (m *AvailabilityMapperDB) DBAvailabilityWithHourToAvailability(
 	modelHours := make([]model.TimeOfDay, 0)
 
 	for _, availWithHour := range availabilityWithHourRows {
-		hour := availWithHour.Hour.Time
+		extractedTime := availWithHour.Hour.Time
 		timeOfDay := model.TimeOfDay{
-			Hour:   int32(hour.Hour()),
-			Minute: int32(hour.Minute()),
+			Hour:   int32(extractedTime.Hour()),
+			Minute: int32(extractedTime.Minute()),
 		}
 		modelHours = append(modelHours, timeOfDay)
 	}
+	
+	
 
 	return &model.Availability{
 		ID:              availabilityWithHourRows[0].AvailabilityID.Bytes,
@@ -218,7 +220,7 @@ func (m *AvailabilityMapperDB) DBAvailabilitiesToAvailabilities(
 		id := row.ID
 		uuidID, err := uuid.FromBytes(id.Bytes[:])
 		if err != nil {
-			// handle error appropriately, here we panic for simplicity
+			// handle error
 		}
 		avail, exists := availabilityMap[uuidID]
 		if !exists {
@@ -252,10 +254,3 @@ func (m *AvailabilityMapperDB) DBAvailabilitiesToAvailabilities(
 	return result
 }
 
-func (r *DBAvailabilityRepository) GetAllAvailabilities(ctx context.Context) ([]model.Availability, error) {
-	dbRows, err := r.queries.GetAllAvailabilities(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return r.mapper.DBAvailabilitiesToAvailabilities(dbRows), nil
-}

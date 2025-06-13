@@ -12,20 +12,29 @@ import (
 
 type ResellerHandler struct {
 	service service.ResellerService
+	availabilityHandler *AvailabilityHandler
+
 }
 
-func NewResellerHandler(service service.ResellerService) *ResellerHandler {
-	return &ResellerHandler{service: service}
+func NewResellerHandler(service service.ResellerService, availabilityHandler *AvailabilityHandler) *ResellerHandler {
+	return &ResellerHandler{
+		service: service,
+		availabilityHandler: availabilityHandler,
+	}
 }
+
 
 func (h *ResellerHandler) Routes(r chi.Router) {
-	r.Route("/api/resellers", func(r chi.Router) {
-		r.Post("/register", h.Register)
-		r.Post("/login", h.Login)
-		r.Get("/", h.ListAll)
-		r.Get("/{id}", h.GetByID)
-		r.Delete("/{id}", h.Delete)
-	})
+	// r.Route("/api/resellers", func(r chi.Router) {
+		// r.Post("/register", h.Register)
+		// r.Post("/login", h.Login)
+		// r.Get("/", h.ListAll)
+		// r.Get("/{id}", h.GetByID)
+		// r.Delete("/{id}", h.Delete)
+		r.With(BasicAuth(h.service)).Get("/1/availabilities/", h.availabilityHandler.getAvailabilitiesInRange)
+
+
+	// })
 }
 
 // Register reseller

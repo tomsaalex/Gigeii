@@ -12,5 +12,5 @@ type AvailabilityDTO struct {
 	ConflictResolutionMode  bool     `json:"resolve_conflict"`
 	Duration               int32    `json:"duration"`
     Precedance             int32    `json:"precedance"`
-	Notes                  string   `json:"notes, omitempty"` // added for additional information
+	Notes                  string   `json:"notes, omitempty"` 
 }
