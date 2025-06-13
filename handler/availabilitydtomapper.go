@@ -157,12 +157,10 @@ func (m *AvailabilityDTOMapper) AvailabilityToDTO(
             days = append(days, int32(6-i))
         }
     }
-    // Convert time-of-day slice to "HH:MM" strings
     hours := make([]string, 0, len(avail.Hours))
     for _, h := range avail.Hours {
         hours = append(hours, fmt.Sprintf("%02d:%02d", h.Hour, h.Minute))
     }
-    // Convert price (int32) to string with decimals
     price := fmt.Sprintf("%d.%02d", avail.Price/100, avail.Price%100)
 
     return AvailabilityDTO{
@@ -180,3 +178,10 @@ func (m *AvailabilityDTOMapper) AvailabilityToDTO(
 }
 
 
+func MapOpeningAvailabilityToAPIItem(a model.OpeningAvailability) AvailabilityItem {
+	return AvailabilityItem{
+		DateTime:  a.DateTime.Format(time.RFC3339),
+		Vacancies: a.Vacancies,
+		Price:     a.Price,
+	}
+}

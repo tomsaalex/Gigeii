@@ -79,3 +79,51 @@ SELECT
     ah.hour
 FROM availabilities a
 LEFT JOIN availability_hours ah ON ah.availability_id = a.id;
+
+
+
+
+
+-- exemplu la get availability by date range
+-- SELECT 
+--     a.id,
+--     a.start_date,
+--     a.end_date,
+--     a.price,
+-- 	a.max_participants,
+--     ah.hour
+-- 	FROM 
+--     availabilities a
+-- JOIN 
+--     availability_hours ah 
+--     ON ah.availability_id = a.id
+-- WHERE 
+--     a.start_date <= '2025-09-05'
+--     AND a.end_date >= '2025-09-08'
+--     AND EXTRACT(HOUR FROM ah.hour) BETWEEN 0 and 24;
+
+
+
+-- name: GetAvailabilitiesInRange :many
+SELECT 
+    a.id,
+    a.start_date,
+    a.end_date,
+    a.price,
+    a.max_participants,
+    a.precedance,
+    (EXTRACT(EPOCH FROM (ah.hour AT TIME ZONE 'UTC')) * 1000000)::BIGINT AS hour_microseconds
+FROM 
+    availabilities a
+JOIN 
+    availability_hours ah 
+    ON ah.availability_id = a.id
+WHERE 
+    a.start_date <= $2
+    AND a.end_date >= $1
+    AND (
+        $3::time = '00:00:00' AND $4::time = '00:00:00'
+        OR EXTRACT(EPOCH FROM (ah.hour AT TIME ZONE 'UTC')) * 1000000 
+           BETWEEN EXTRACT(EPOCH FROM $3::time) * 1000000 
+           AND EXTRACT(EPOCH FROM $4::time) * 1000000
+    );

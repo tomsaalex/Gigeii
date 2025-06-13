@@ -16,6 +16,19 @@ func main() {
 	pool := db.NewConnectionPool()
 	queries := db.New(pool)
 
+	//trebuie sa conv asa
+	// date:= "2025-06-06T00:00:00+02:00"
+	// data,_:=time.Parse("2006-01-02T15:04:05-07:00", date)
+	// fmt.Println(data.Format(time.DateOnly))
+	// fmt.Println(data.UTC().Format(time.DateOnly))
+	// loc:=time.FixedZone("Europe/Bucharest", 2*60*60)
+	// fmt.Println(data.UTC().In(loc).Format(time.DateOnly))
+
+
+	
+
+
+
 	userRepository := repository.NewDBUserRepository(queries)
 	availabilityRepository := repository.NewDBAvailabilityRepository(pool, queries)
 
@@ -31,7 +44,7 @@ func main() {
 
 	resellerRepo:= repository.NewDbResellerRepository(queries)
 	resellerService := service.NewResellerService(resellerRepo)
-	resellerHandler := handler.NewResellerHandler(resellerService)
+	resellerHandler := handler.NewResellerHandler(resellerService, availabilityHandler)
 
 	r := handler.SetupRoutes(handler.RouteDependencies{
 		UserHandler:         userHandler,

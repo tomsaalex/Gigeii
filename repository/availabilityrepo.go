@@ -21,6 +21,11 @@ type AvailabilityRepository interface {
 	Update(ctx context.Context, queries *db.Queries, availability model.Availability) (*model.Availability, error)
 	Delete(ctx context.Context, queries *db.Queries, availabilityID uuid.UUID) (*model.Availability, error)
 	GetAllAvailabilities(ctx context.Context) ([]model.Availability, error)
+
+	
+	GetAvailabilitiesInRange(ctx context.Context, 	from, to string) ([]model.OpeningAvailability, error)
+
+	
 }
 
 func NewDBAvailabilityRepository(connPool *pgxpool.Pool, queries *db.Queries) AvailabilityRepository {

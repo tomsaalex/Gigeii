@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"example.com/repository"
 	"example.com/service"
@@ -60,7 +61,6 @@ func (h *AvailabilityHandler) addAvailability(w http.ResponseWriter, r *http.Req
 		precAvailabilityID = uuid.Nil
 	}
 
-	conflictResolutionMode := availabilityDTO.ConflictResolutionMode
 
 	ownerEmail, emailAttached := r.Context().Value(UserEmailKey).(string)
 	if !emailAttached {
@@ -82,7 +82,6 @@ func (h *AvailabilityHandler) addAvailability(w http.ResponseWriter, r *http.Req
 		r.Context(),
 		*availability,
 		precAvailabilityID,
-		conflictResolutionMode,
 	)
 
 	if err != nil {
@@ -166,7 +165,6 @@ func (h *AvailabilityHandler) updateAvailability(w http.ResponseWriter, r *http.
 		precAvailabilityID = uuid.Nil
 	}
 
-	conflictResolutionMode := availabilityDTO.ConflictResolutionMode
 
 	ownerEmail, emailAttached := r.Context().Value(UserEmailKey).(string)
 	if !emailAttached {
@@ -188,7 +186,6 @@ func (h *AvailabilityHandler) updateAvailability(w http.ResponseWriter, r *http.
 		r.Context(),
 		*availability,
 		precAvailabilityID,
-		conflictResolutionMode,
 	)
 
 	if err != nil {
@@ -278,6 +275,8 @@ func (h *AvailabilityHandler) getAllAvailabilities(w http.ResponseWriter, r *htt
 			MaxParticipants:         avail.MaxParticipants,
 			Notes:                   avail.Notes, // Include if notes are added to AvailabilityDTO
 			ConflictResolutionMode:  false,       // Default value
+			Duration: 			  int32(avail.Duration.Hours()),
+			Precedance: avail.Precedance,
 			PrecedentAvailabilityID: "",          // Default empty
 		})
 	}
@@ -308,4 +307,53 @@ func (h *AvailabilityHandler) getAvailabilityByID(w http.ResponseWriter, r *http
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(dto)
+}
+func (h *AvailabilityHandler) getAvailabilitiesInRange(w http.ResponseWriter, r *http.Request) {
+	fromStr := r.URL.Query().Get("fromDateTime")
+	toStr := r.URL.Query().Get("toDateTime")
+
+	if fromStr == "" || toStr == "" {
+		writeErrorResponse(w, http.StatusBadRequest, "VALIDATION_FAILURE", "fromDateTime and toDateTime query parameters are required")
+		return
+	}
+
+	// Validăm că sunt în format 
+	if _, err := time.Parse(time.RFC3339, fromStr); err != nil {
+		writeErrorResponse(w, http.StatusBadRequest, "VALIDATION_FAILURE", "Invalid fromDateTime format: "+err.Error())
+		return
+	}
+
+	if _, err := time.Parse(time.RFC3339, toStr); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		writeErrorResponse(w, http.StatusBadRequest, "VALIDATION_FAILURE", "Invalid toDateTime format: "+err.Error())
+		return
+	}
+
+	// Doar trimitem stringurile mai departe
+	availabilities, err := h.availabilityService.GetAvailabilitiesInRange(
+		r.Context(),
+		fromStr,
+		toStr,
+	)
+	if err != nil {
+		//fmt.Println("Error fetching availabilities:", err)
+		writeErrorResponse(w, http.StatusInternalServerError, "INTERNAL_SYSTEM_FAILURE", "Internal error while fetching availabilities")
+		return
+	}
+
+	items := make([]AvailabilityItem, 0, len(availabilities))
+	for _, a := range availabilities {
+		items = append(items, AvailabilityItem{
+			DateTime:  a.DateTime.Format(time.RFC3339),
+			Vacancies: a.Vacancies,
+			Price:     a.Price,
+		})
+	}
+
+	response := AvailabilityAPIResponse{}
+	response.Data.Availabilities = items
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
