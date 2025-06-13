@@ -99,8 +99,8 @@ templ FullCalendarPage() {
 									<input type="number" class="form-control" id="duration" min="15" value="60" step="15" required/>
 								</div>
 								<div class="col-md-6 mb-2">
-									<label for="precedence" class="form-label">Precedence</label>
-									<input type="number" class="form-control" id="precedence" value="0" placeholder="0 for normal, higher to override"/>
+									<label for="precedance" class="form-label">Precedance</label>
+									<input type="number" class="form-control" id="precedance" value="0" placeholder="0 for normal, higher to override"/>
 								</div>
 							</div>
 							<div class="mb-2">
@@ -230,7 +230,7 @@ templ FullCalendarPage() {
 					document.getElementById('price').value = "0";
 					document.getElementById('max-participants').value = "1";
 					document.getElementById('duration').value = "60";
-					document.getElementById('precedence').value = "0";
+					document.getElementById('precedance').value = "0";
 					document.getElementById('availability-notes').value = "";
 					document.getElementById('delete-availability-btn').style.display = 'none';
 					clearAndFocusSelectedDate(dateStr);
@@ -248,7 +248,7 @@ templ FullCalendarPage() {
 					document.getElementById('price').value = availability.price?.toString() || "0";
 					document.getElementById('max-participants').value = availability.max_participants?.toString() || "1";
 					document.getElementById('duration').value = availability.duration?.toString() || "60";
-					document.getElementById('precedence').value = availability.precedence?.toString() || "0"; 
+					document.getElementById('precedance').value = availability.precedance?.toString() || "0"; 
 					document.getElementById('availability-notes').value = availability.notes || "";
 
 					document.querySelectorAll('.days-of-week-group .form-check-input').forEach(cb => {
@@ -318,7 +318,7 @@ templ FullCalendarPage() {
 						price: document.getElementById('price').value.toString(), 
 						max_participants: parseInt(document.getElementById('max-participants').value),
 						duration: parseInt(document.getElementById('duration').value),
-						precedence: parseInt(document.getElementById('precedence').value), 
+						precedance: parseInt(document.getElementById('precedance').value), 
 						notes: document.getElementById('availability-notes').value,
 						resolve_conflict: true, 
 						prec_availability_id: null 
