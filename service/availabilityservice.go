@@ -29,14 +29,12 @@ func NewAvailabilityService(
 		availabilityRepo: availabilityRepo,
 	}
 }
-
 func (s *AvailabilityService) AddAvailability(
 	ctx context.Context,
 	availability model.Availability,
 	precAvailabilityID uuid.UUID,
-	conflictResolutionMode bool,
 ) (*model.Availability, []model.Availability, error) {
-	// TODO: This transaction should be made Serializable
+
 	tx, err := s.connPool.Begin(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -54,30 +52,18 @@ func (s *AvailabilityService) AddAvailability(
 	}
 
 	if len(conflictingAvailabilities) != 0 {
-		if !conflictResolutionMode {
-			return nil, conflictingAvailabilities, &UnhandledConflictError{
-				Message: "Unhandled availability conflicts found",
+		// aflam precedenta maxima din conflicte
+		maxPrecedence := 0
+		for _, c := range conflictingAvailabilities {
+			if c.Precedance > int32(maxPrecedence) {
+				maxPrecedence = int(c.Precedance)
 			}
 		}
+		availability.Precedance = int32(maxPrecedence + 1)
 
-		if precAvailabilityID != uuid.Nil {
-			foundAvailability, err := s.availabilityRepo.GetByID(ctx, qtx, precAvailabilityID)
-
-			if err != nil {
-				return nil, conflictingAvailabilities, &repository.EntityNotFoundError{
-					Message: fmt.Sprintf(
-						"Couldn't find the Availability with ID for conflict resolution: %s",
-						precAvailabilityID,
-					),
-				}
-			}
-
-			availability.Precedance = foundAvailability.Precedance + 1
-		} else {
-			availability.Precedance = 0
-		}
-
-		s.availabilityRepo.ShiftPrecedenceAbove(ctx, qtx, availability.Precedance-1)
+		// facem shift daca vrei, sau sari peste daca nu vrei shift (aici nu e nevoie neaparat)
+	} else {
+		availability.Precedance = 0
 	}
 
 	addedAvailability, err := s.availabilityRepo.Add(ctx, qtx, availability)
@@ -92,9 +78,8 @@ func (s *AvailabilityService) UpdateAvailability(
 	ctx context.Context,
 	availability model.Availability,
 	precAvailabilityID uuid.UUID,
-	conflictResolutionMode bool,
 ) (*model.Availability, []model.Availability, error) {
-	// TODO: This transaction should be made Serializable
+
 	tx, err := s.connPool.Begin(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -111,41 +96,23 @@ func (s *AvailabilityService) UpdateAvailability(
 		}
 	}
 
-	if len(conflictingAvailabilities) != 0 {
-		if !conflictResolutionMode {
-			return nil, conflictingAvailabilities, &UnhandledConflictError{
-				Message: "Unhandled availability conflicts found",
-			}
+	// Calculăm precedența corect
+	maxPrecedence := 0
+	for _, c := range conflictingAvailabilities {
+		if c.Precedance > int32(maxPrecedence) {
+			maxPrecedence = int(c.Precedance)
 		}
-
-		if precAvailabilityID != uuid.Nil {
-			foundAvailability, err := s.availabilityRepo.GetByID(ctx, qtx, precAvailabilityID)
-
-			if err != nil {
-				return nil, conflictingAvailabilities, &repository.EntityNotFoundError{
-					Message: fmt.Sprintf(
-						"Couldn't find the Availability with ID for conflict resolution: %s",
-						precAvailabilityID,
-					),
-				}
-			}
-
-			availability.Precedance = foundAvailability.Precedance + 1
-		} else {
-			availability.Precedance = 0
-		}
-
-		s.availabilityRepo.ShiftPrecedenceAbove(ctx, qtx, availability.Precedance-1)
 	}
+	availability.Precedance = int32(maxPrecedence + 1)
 
 	updatedAvailability, err := s.availabilityRepo.Update(ctx, qtx, availability)
-
 	if err != nil {
 		return nil, nil, err
 	}
 
 	return updatedAvailability, conflictingAvailabilities, tx.Commit(ctx)
 }
+
 
 func (s *AvailabilityService) DeleteAvailability(
 	ctx context.Context,
@@ -160,3 +127,18 @@ func (s *AvailabilityService) GetAllAvailabilities(ctx context.Context) ([]model
 func (s *AvailabilityService) GetAvailabilityByID(ctx context.Context, id uuid.UUID) (*model.Availability, error) {
 	return s.availabilityRepo.GetByID(ctx, nil, id)
 }
+
+func (s *AvailabilityService) GetAvailabilitiesInRange(
+	ctx context.Context,
+	from, to string,
+) ([]model.OpeningAvailability, error) {
+	_,err:=s.availabilityRepo.GetAvailabilitiesInRange(ctx, from, to)
+	if err != nil {
+		fmt.Println("Error getting availabilities service in range:", err)
+		return nil,err
+	}
+
+	return s.availabilityRepo.GetAvailabilitiesInRange(ctx, from, to)
+}
+
+
