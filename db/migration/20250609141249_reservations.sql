@@ -1,6 +1,8 @@
 -- +goose Up
 CREATE TABLE IF NOT EXISTS reservations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    availability_id UUID NOT NULL REFERENCES availabilities(id) ON DELETE CASCADE,
+
 
     reservation_reference TEXT NOT NULL UNIQUE, -- ID intern 
     external_reservation_reference TEXT NOT NULL,

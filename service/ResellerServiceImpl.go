@@ -13,6 +13,7 @@ import (
 
 type resellerServiceImpl struct {
 	repo repository.ResellerRepository
+	
 }
 
 // Delete implements ResellerService.

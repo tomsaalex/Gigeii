@@ -37,6 +37,9 @@ func pgTypeToTime(date pgtype.Date) time.Time {
 	return date.Time
 }
 
+
+
+
 func timeOfDayToPgTimestampTz(td model.TimeOfDay) pgtype.Timestamptz {
 	timestamp := time.Date(1970, 1, 1, int(td.Hour), int(td.Minute), 0, 0, time.Local)
 	return pgtype.Timestamptz{
