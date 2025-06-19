@@ -30,10 +30,11 @@ templ ThemingCalendar() {
 			--box-shadow-selected-day: 0 4px 12px rgba(59, 130, 246, 0.20);
 			--box-shadow-panel: 0 6px 25px rgba(0, 0, 0, 0.1);
 
-			/* Availability Event Colors */
-			--fc-event-bg: var(--secondary-color);
-			--fc-event-border: #1e5bcd;
-			--fc-event-text-color: #ffffff;
+			/* Updated Event Colors */
+			--event-winner-bg: #3b82f6;
+			--event-winner-border: #2563eb;
+			--event-winner-dot-color: #3b82f6;
+			--event-text-color: #ffffff;
 
 			/* Today's Cell Hover */
 			--today-cell-hover-bg: #b39ddb;
@@ -113,20 +114,17 @@ templ ThemingCalendar() {
 			max-width: 100%;
 			margin: 0 auto;
 		}
-
 		.fc .fc-toolbar.fc-header-toolbar {
 			margin-bottom: 15px;
 			padding-bottom: 10px;
 			border-bottom: 1px solid var(--border-color);
 		}
-
 		.fc .fc-toolbar-title {
 			font-size: 1.5rem;
 			font-weight: 600;
 			color: var(--primary-color-dark);
 			margin: 0;
 		}
-
 		.fc .fc-button {
 			background-color: var(--primary-color);
 			color: #fff;
@@ -139,39 +137,33 @@ templ ThemingCalendar() {
 			transition: background-color 0.18s, transform 0.13s, box-shadow 0.18s;
 			text-transform: capitalize;
 		}
-
 		.fc .fc-button:hover {
 			background-color: var(--primary-color-dark);
 			transform: translateY(-1px) scale(1.02);
 			box-shadow: 0 3px 9px rgba(106, 17, 203, 0.20);
 			color: #fff;
 		}
-
 		.fc .fc-button-primary:not(:disabled):active, .fc .fc-button-primary:not(:disabled).fc-button-active {
 			background-color: var(--primary-color-active);
 			border-color: var(--primary-color-active);
 			box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.20);
 		}
-
 		.fc .fc-view-harness {
 			overflow: hidden;
 			background-color: var(--grid-bg);
 			border-radius: var(--border-radius-grid-item);
 			padding: 5px;
 		}
-
 		.fc .fc-daygrid-body table, .fc .fc-col-header table, .fc .fc-scrollgrid-section table {
 			border-collapse: separate !important;
 			border-spacing: 6px !important;
 			width: 100%;
 		}
-
 		.fc .fc-daygrid-day, .fc .fc-col-header-cell {
 			background-color: var(--grid-bg);
 			padding: 0 !important;
 			border: none !important;
 		}
-
 		.fc .fc-daygrid-day-frame {
 			background: var(--day-cell-bg);
 			border: 1px solid var(--day-cell-border-color);
@@ -180,38 +172,31 @@ templ ThemingCalendar() {
 			transition: background-color 0.18s, color 0.18s, box-shadow 0.18s, border-color 0.18s, transform 0.13s;
 			border-radius: var(--border-radius-grid-item);
 			box-shadow: var(--box-shadow-day);
-			min-height: 90px;
 			display: flex;
 			flex-direction: column;
 			align-items: center;
 			justify-content: flex-start;
 			position: relative;
 			padding: 6px;
-			overflow: hidden;
 		}
-
 		.fc .fc-daygrid-day:not(.fc-day-has-event):not(.fc-day-today):hover .fc-daygrid-day-frame:not(.fc-day-disabled):not(.fc-day-selected-frame) {
 			background-color: var(--day-cell-hover-bg) !important;
 			border-color: var(--day-cell-hover-border) !important;
 			transform: translateY(-1px);
 			box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
 		}
-
 		.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-frame:not(.fc-day-selected-frame) {
 			border: 2px solid var(--secondary-color) !important;
 			background-color: #e9f2ff;
 		}
-
 		.fc .fc-daygrid-day.fc-day-today:hover .fc-daygrid-day-frame:not(.fc-day-disabled):not(.fc-day-selected-frame) {
 			background-color: var(--today-cell-hover-bg) !important;
 			border-color: var(--today-cell-hover-border) !important;
 			box-shadow: 0 3px 9px rgba(0, 0, 0, 0.12);
 		}
-
 		.fc .fc-daygrid-day.fc-day-today:hover .fc-daygrid-day-number {
 			color: var(--today-cell-hover-text) !important;
 		}
-
 		.fc .fc-daygrid-day.fc-day-selected .fc-daygrid-day-frame, .fc-day-selected-frame {
 			background: var(--selected-day-bg) !important;
 			color: var(--selected-day-text-color) !important;
@@ -221,7 +206,6 @@ templ ThemingCalendar() {
 			z-index: 2;
 			padding: calc(6px - 1px);
 		}
-
 		.fc .fc-daygrid-day.fc-day-disabled .fc-daygrid-day-frame {
 			color: #bbb;
 			pointer-events: none;
@@ -229,18 +213,18 @@ templ ThemingCalendar() {
 			border-color: #e0e0e0;
 			box-shadow: none;
 		}
-
+		.fc .fc-day-other {
+			opacity: 0.5;
+		}
 		.fc .fc-daygrid-day.fc-day-other .fc-daygrid-day-frame {
-			background: #f9f9f9;
-			border-color: #f0f0f0;
+			background: transparent;
+			border-color: transparent;
 			cursor: default;
 			box-shadow: none;
 		}
-
 		.fc .fc-daygrid-day.fc-day-other .fc-daygrid-day-number {
 			color: #ccc;
 		}
-
 		.fc .fc-daygrid-day-top {
 			display: flex;
 			justify-content: center;
@@ -248,7 +232,6 @@ templ ThemingCalendar() {
 			width: 100%;
 			padding: 3px 0;
 		}
-
 		.fc .fc-daygrid-day-number {
 			font-weight: 500;
 			font-size: 1.05rem;
@@ -258,18 +241,15 @@ templ ThemingCalendar() {
 			text-decoration: none !important;
 			transition: color 0.18s;
 		}
-
 		.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
 			color: var(--secondary-color);
 			font-weight: 700;
 			font-size: 1.1rem;
 		}
-
 		.fc .fc-daygrid-day.fc-day-selected .fc-daygrid-day-number, .fc-day-selected-frame .fc-daygrid-day-number {
 			color: var(--selected-day-text-color);
 			font-weight: 700;
 		}
-
 		.fc .fc-col-header-cell-cushion {
 			font-weight: 600;
 			color: var(--header-text-color);
@@ -285,42 +265,64 @@ templ ThemingCalendar() {
 		}
 
 		.fc-availability-event .fc-event-main,
-		.fc-daygrid-event.fc-availability-event .fc-event-main-frame {
+		.fc-availability-event .fc-event-main-frame {
 			font-family: 'Poppins', sans-serif;
-			font-size: 0.8em;
-			font-weight: 500;
+			font-size: 0.85em;
+			font-weight: 600;
 			padding: 4px 6px;
+			color: var(--event-text-color);
 		}
-
-		.fc-availability-event, .fc-timegrid-event .fc-event-main {
-			background-color: var(--fc-event-bg) !important;
-			border: 1px solid var(--fc-event-border) !important;
-			color: var(--fc-event-text-color) !important;
-			transition: opacity 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-			border-radius: var(--border-radius-sm);
-			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-		}
-
-		.fc-availability-event:hover, .fc-timegrid-event:hover .fc-event-main:hover {
+		.fc-availability-event:hover {
 			opacity: 0.85;
-			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 		}
-
 		.fc-daygrid-event.fc-availability-event {
-			margin-bottom: 4px !important;
+			margin-bottom: 2px !important;
 			cursor: pointer;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			white-space: nowrap;
 		}
-
-		.fc-timegrid-event .fc-event-main {
-			font-size: 0.8em;
-		}
-
 		.fc-daygrid-event-harness {
-			margin: 0 4px;
+			margin: 0 4px 2px 4px;
 		}
+
+		.fc-timegrid-view .fc-event-winner {
+			background-color: var(--event-winner-bg);
+			border: 1px solid var(--event-winner-border);
+			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+			border-radius: var(--border-radius-sm);
+		}
+		.fc-list-view .fc-event-winner .fc-list-event-dot,
+		.fc-daygrid-view .fc-event-winner .fc-daygrid-event-dot {
+			border-color: var(--event-winner-dot-color);
+		}
+		.fc-daygrid-view .fc-event-winner .fc-event-title {
+		    color: var(--event-winner-dot-color);
+		}
+		
+		.fc-event-loser .fc-event-main {
+			color: #343a40;
+		}
+		.fc-popover .fc-popover-body {
+			max-height: 250px;
+			overflow-y: auto;
+			padding-right: 10px; 
+		}
+		.fc-popover .fc-popover-body::-webkit-scrollbar {
+			width: 6px;
+		}
+		.fc-popover .fc-popover-body::-webkit-scrollbar-track {
+			background: #f1f1f1;
+			border-radius: 10px;
+		}
+		.fc-popover .fc-popover-body::-webkit-scrollbar-thumb {
+			background: #ccc;
+			border-radius: 10px;
+		}
+		.fc-popover .fc-popover-body::-webkit-scrollbar-thumb:hover {
+			background: #aaa;
+		}
+
 
 		#availability-panel {
 			background-color: #ffffff;
@@ -333,11 +335,9 @@ templ ThemingCalendar() {
 			border: 1px solid var(--border-color);
 			position: relative;
 		}
-
 		#availability-panel.open {
 			display: flex;
 		}
-
 		#availability-panel h3 {
 			color: var(--primary-color);
 			font-weight: 600;
@@ -346,65 +346,54 @@ templ ThemingCalendar() {
 			border-bottom: 1px solid var(--border-color);
 			padding-bottom: 8px;
 		}
-
 		#availability-panel .form-label {
 			font-weight: 500;
 			margin-bottom: 0.2rem;
 			font-size: 0.8rem;
 		}
-
 		#availability-panel .form-control, #availability-panel .form-select {
 			border-radius: var(--border-radius-sm);
 			font-size: 0.85rem;
 			border-color: #ced4da;
 			padding: 0.3rem 0.6rem;
 		}
-
 		#availability-panel .form-control:focus, #availability-panel .form-select:focus {
 			border-color: var(--primary-color-dark);
 			box-shadow: 0 0 0 0.2rem rgba(106, 17, 203, 0.25);
 		}
-
 		#availability-panel .btn {
 			border-radius: var(--border-radius-button);
 			font-weight: 500;
 			padding: 0.35rem 0.7rem;
 			font-size: 0.8rem;
 		}
-
 		#availability-panel .btn-sm-extra {
 			font-size: 0.7rem;
 			padding: 0.2rem 0.4rem;
 			margin-left: 5px;
 		}
-
 		#availability-panel .btn-primary {
 			background-color: var(--primary-color);
 			border-color: var(--primary-color);
 		}
-
 		#availability-panel .btn-primary:hover {
 			background-color: var(--primary-color-dark);
 			border-color: var(--primary-color-dark);
 		}
-
 		#availability-panel .btn-danger {
 			background-color: #dc3545;
 			border-color: #dc3545;
 		}
-
 		#availability-panel .btn-danger:hover {
 			background-color: #c82333;
 			border-color: #bd2130;
 		}
-
 		.panel-actions {
 			display: flex;
 			gap: 10px;
 			margin-top: 10px;
 			justify-content: space-between;
 		}
-
 		.panel-close-btn {
 			position: absolute;
 			top: 10px;
@@ -417,7 +406,6 @@ templ ThemingCalendar() {
 			padding: 0;
 			line-height: 1;
 		}
-
 		.panel-close-btn:hover {
 			color: var(--primary-color);
 		}
@@ -425,7 +413,6 @@ templ ThemingCalendar() {
 		.selection-helpers {
 			margin-bottom: 5px;
 		}
-
 		.selection-helpers .btn-group .btn {
 			font-size: 0.7rem;
 			padding: 0.2rem 0.4rem;
@@ -437,15 +424,12 @@ templ ThemingCalendar() {
 			gap: 8px;
 			padding: 5px 0;
 		}
-
 		.days-of-week-group .form-check {
 			margin: 0;
 		}
-
 		.days-of-week-group .form-check-input {
 			display: none;
 		}
-
 		.days-of-week-group .form-check-label {
 			display: inline-block;
 			padding: 6px 12px;
@@ -459,21 +443,22 @@ templ ThemingCalendar() {
 			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 			user-select: none;
 		}
-
 		.days-of-week-group .form-check-input:checked+.form-check-label {
 			background-color: var(--primary-color);
 			color: #fff;
 			border-color: var(--primary-color-dark);
 			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 		}
-
 		.days-of-week-group .form-check-label:hover {
 			border-color: var(--primary-color-dark);
 			background-color: #f0eaff;
 		}
-
 		.days-of-week-group .form-check-input:checked+.form-check-label:hover {
 			background-color: var(--primary-color-dark);
+		}
+		.days-of-week-group .day-disabled {
+			opacity: 0.5;
+			pointer-events: none;
 		}
 
 		.hours-selection-group {
@@ -487,15 +472,12 @@ templ ThemingCalendar() {
 			overflow-y: auto;
 			border: 1px solid var(--border-color);
 		}
-
 		.hours-selection-group .form-check {
 			margin: 0;
 		}
-
 		.hours-selection-group .form-check-input {
 			display: none;
 		}
-
 		.hours-selection-group .form-check-label {
 			display: block;
 			text-align: center;
@@ -509,19 +491,16 @@ templ ThemingCalendar() {
 			color: var(--text-color);
 			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 		}
-
 		.hours-selection-group .form-check-input:checked+.form-check-label {
 			background-color: var(--secondary-color);
 			color: #fff;
 			border-color: #1e5bcd;
 			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 		}
-
 		.hours-selection-group .form-check-label:hover {
 			border-color: var(--primary-color-dark);
 			background-color: #e0e7ff;
 		}
-
 		.hours-selection-group .form-check-input:checked+.form-check-label:hover {
 			background-color: #1e5bcd;
 		}
@@ -545,11 +524,9 @@ templ ThemingCalendar() {
 			align-items: center;
 			z-index: 1050;
 		}
-
 		.modal-overlay.show {
 			display: flex;
 		}
-
 		.modal-content {
 			background-color: #fff;
 			padding: 25px;
@@ -559,25 +536,21 @@ templ ThemingCalendar() {
 			max-width: 450px;
 			text-align: center;
 		}
-
 		.modal-content h4 {
 			color: var(--primary-color);
 			margin-top: 0;
 			margin-bottom: 15px;
 		}
-
 		.modal-content p {
 			margin-bottom: 20px;
 			font-size: 0.95rem;
 			color: var(--text-color);
 		}
-
 		.modal-actions {
 			display: flex;
 			justify-content: flex-end;
 			gap: 10px;
 		}
-
 		.modal-actions .btn {
 			padding: 0.5rem 1rem;
 			font-size: 0.9rem;
@@ -588,26 +561,21 @@ templ ThemingCalendar() {
 				flex-direction: column;
 				align-items: center;
 			}
-
 			.calendar-column, .panel-column {
 				min-width: 90%;
 				max-width: 90%;
 			}
 		}
-
 		@media (max-width: 700px) {
 			.container-fluid {
 				padding: 9px;
 			}
-
 			.calendar-wrapper {
 				padding: 5px;
 			}
-
 			.page-container {
 				margin: 7px auto;
 			}
-
 			.calendar-column, .panel-column {
 				min-width: 98%;
 				max-width: 98%;
