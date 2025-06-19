@@ -23,7 +23,7 @@ func main() {
 	// fmt.Println(data.UTC().Format(time.DateOnly))
 	// loc:=time.FixedZone("Europe/Bucharest", 2*60*60)
 	// fmt.Println(data.UTC().In(loc).Format(time.DateOnly))
-
+	
 
 	
 
@@ -31,20 +31,26 @@ func main() {
 
 	userRepository := repository.NewDBUserRepository(queries)
 	availabilityRepository := repository.NewDBAvailabilityRepository(pool, queries)
+	reservationRepo:=repository.NewDbReservationRepository(queries, pool)
+
+
 
 	argonHelper := service.StandardArgon2idHash()
 	userService := service.NewUserService(userRepository, argonHelper)
 	availabilityService := service.NewAvailabilityService(availabilityRepository, pool, queries)
+	reservationService:= service.NewReservationService(reservationRepo, availabilityRepository, pool)
 
 	jwtHelper := service.NewJwtUtil()
 	userHandler := handler.NewUserHandler(userService, jwtHelper)
 	availabilityHandler := handler.NewAvailabilityHandler(userService, availabilityService)
 	pageHandler := handler.NewPageHandler()
+	reservationHandler:=handler.NewReservationHandler(reservationService,*availabilityService)
+
 
 
 	resellerRepo:= repository.NewDbResellerRepository(queries)
 	resellerService := service.NewResellerService(resellerRepo)
-	resellerHandler := handler.NewResellerHandler(resellerService, availabilityHandler)
+	resellerHandler := handler.NewResellerHandler(resellerService, availabilityHandler, reservationHandler)
 
 	r := handler.SetupRoutes(handler.RouteDependencies{
 		UserHandler:         userHandler,

@@ -16,9 +16,7 @@ type RouteDependencies struct {
 func SetupRoutes(dep RouteDependencies) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(JWTContextMiddleware(dep.JwtHelper))
-	if dep.ResellerHandler != nil {
-		dep.ResellerHandler.Routes(r)
-	}
+	
 
 	// Guest-only (login/register)
 	r.Group(func(r chi.Router) {
@@ -46,5 +44,9 @@ func SetupRoutes(dep RouteDependencies) *chi.Mux {
 		r.Put("/availabilities/{id}", dep.AvailabilityHandler.updateAvailability)
 		r.Delete("/availabilities/{id}", dep.AvailabilityHandler.deleteAvailability)
 	})
+
+	if dep.ResellerHandler != nil {
+		dep.ResellerHandler.Routes(r)
+	}
 	return r
 }

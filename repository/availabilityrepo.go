@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"example.com/db"
 	"example.com/model"
@@ -24,6 +25,8 @@ type AvailabilityRepository interface {
 
 	
 	GetAvailabilitiesInRange(ctx context.Context, 	from, to string) ([]model.OpeningAvailability, error)
+	GetAvailableVacancies(ctx context.Context, availabilityID uuid.UUID) (int32, error)
+	GetAvailabilityIdForReservation(ctx context.Context, queries *db.Queries, date, hour time.Time) (uuid.UUID, error)
 
 	
 }

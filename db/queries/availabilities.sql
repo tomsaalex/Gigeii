@@ -127,3 +127,36 @@ WHERE
            BETWEEN EXTRACT(EPOCH FROM $3::time) * 1000000 
            AND EXTRACT(EPOCH FROM $4::time) * 1000000
     );
+
+
+-- name: GetAvailableVacancies :one
+SELECT 
+    a.max_participants - COALESCE(SUM(r.quantity), 0) AS vacancies
+FROM 
+    availabilities a
+LEFT JOIN 
+    reservations r 
+ON 
+    a.id = r.availability_id AND r.status = 'CONFIRMED'
+WHERE 
+    a.id = $1
+GROUP BY 
+    a.max_participants;
+
+
+-- name: GetAvailabilityIdForReservation :one
+SELECT 
+    a.id
+FROM 
+    availabilities a
+JOIN 
+    availability_hours ah 
+    ON ah.availability_id = a.id
+WHERE 
+    a.start_date <= $1::date
+    AND a.end_date >= $1::date
+    AND ah.hour = $2::timestamptz
+ORDER BY 
+    a.precedance DESC
+LIMIT 1;
+

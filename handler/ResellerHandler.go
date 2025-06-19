@@ -13,29 +13,29 @@ import (
 type ResellerHandler struct {
 	service service.ResellerService
 	availabilityHandler *AvailabilityHandler
+	reservationHandler *ReservationHandler
 
 }
 
-func NewResellerHandler(service service.ResellerService, availabilityHandler *AvailabilityHandler) *ResellerHandler {
+func NewResellerHandler(service service.ResellerService, availabilityHandler *AvailabilityHandler, 
+				reservationHandler *ReservationHandler) *ResellerHandler {
 	return &ResellerHandler{
 		service: service,
 		availabilityHandler: availabilityHandler,
+		reservationHandler: reservationHandler,
 	}
 }
 
 
 func (h *ResellerHandler) Routes(r chi.Router) {
-	// r.Route("/api/resellers", func(r chi.Router) {
-		// r.Post("/register", h.Register)
-		// r.Post("/login", h.Login)
-		// r.Get("/", h.ListAll)
-		// r.Get("/{id}", h.GetByID)
-		// r.Delete("/{id}", h.Delete)
-		r.With(BasicAuth(h.service)).Get("/1/availabilities/", h.availabilityHandler.getAvailabilitiesInRange)
-
-
-	// })
+	r.Route("/1", func(r chi.Router) {
+		r.With(BasicAuth(h.service)).Get("/availabilities/", h.availabilityHandler.getAvailabilitiesInRange)
+		r.With(BasicAuth(h.service)).Post("/reserve", h.reservationHandler.Reserve)
+		r.With(BasicAuth(h.service)).Post("/cancel-reservation", h.reservationHandler.Cancel)
+		r.With(BasicAuth(h.service)).Get("/reservation/{reservationReference}", h.reservationHandler.ViewReservation)
+	})
 }
+
 
 // Register reseller
 func (h *ResellerHandler) Register(w http.ResponseWriter, r *http.Request) {

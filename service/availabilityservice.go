@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"example.com/db"
 	"example.com/model"
@@ -139,6 +140,19 @@ func (s *AvailabilityService) GetAvailabilitiesInRange(
 	}
 
 	return s.availabilityRepo.GetAvailabilitiesInRange(ctx, from, to)
+}
+
+func (s *AvailabilityService) GetAvailabilityIDForReservation(ctx context.Context, dateTime time.Time) (uuid.UUID, error) {
+	// apelăm repository simplu
+	// Trunchiem ora
+	dateUTC := dateTime.UTC().Truncate(24 * time.Hour)
+
+	// scoatem ora tot în UTC
+	hourUTC := dateTime.UTC()
+	hour := time.Date(1970, 1, 1, hourUTC.Hour(), hourUTC.Minute(), hourUTC.Second(), 0, time.UTC)
+
+	//fmt.Println("Getting availability ID for reservation at date:", dateUTC, "and hour:", hour)
+	return s.availabilityRepo.GetAvailabilityIdForReservation(ctx, s.queries, dateUTC, hour)
 }
 
 
