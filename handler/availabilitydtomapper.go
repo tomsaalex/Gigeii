@@ -3,7 +3,6 @@ package handler
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"example.com/model"
@@ -51,27 +50,7 @@ func HoursSliceToTimeOfDaySlice(stringHours []string) ([]model.TimeOfDay, error)
 }
 
 func StringPriceToInt(strPrice string) (int, error) {
-	numSubstrings := 2
-	parts := strings.SplitN(strPrice, ".", numSubstrings)
-
-	// Handle the whole number part
-	whole := parts[0]
-	if whole == "" {
-		return 0, fmt.Errorf("Price is invalid")
-	}
-
-	// Handle the fractional (decimal) part
-	fraction := "00"
-	if len(parts) == numSubstrings {
-		raw := parts[1] + "00" // pad in case it's too short
-		fraction = raw[:2]     // truncate to exactly 2 digits
-	}
-
-	// Combine into a string like "1234"
-	combined := whole + fraction
-
-	// Convert to int
-	return strconv.Atoi(combined)
+	return strconv.Atoi(strPrice)
 }
 
 func (m *AvailabilityDTOMapper) AvailabilityDTOToAvailability(
@@ -102,9 +81,8 @@ func (m *AvailabilityDTOMapper) AvailabilityDTOToAvailability(
 	}
 
 	if endDate.Before(startDate) {
-    errorsList = append(errorsList, "Start date must be before end date")
-}
-
+		errorsList = append(errorsList, "Start date must be before end date")
+	}
 
 	daysBitmap, err := DaysSliceToBitmap(availabilityDTO.Days)
 	if err != nil {
@@ -142,41 +120,39 @@ func (m *AvailabilityDTOMapper) AvailabilityDTOToAvailability(
 		Price:           int32(price),
 		MaxParticipants: availabilityDTO.MaxParticipants,
 		Duration:        time.Duration(availabilityDTO.Duration) * time.Minute,
-        Precedance:      availabilityDTO.Precedance,
-        Notes:           availabilityDTO.Notes,
+		Precedance:      availabilityDTO.Precedance,
+		Notes:           availabilityDTO.Notes,
 	}, nil
 }
 
 func (m *AvailabilityDTOMapper) AvailabilityToDTO(
-    avail *model.Availability,
+	avail *model.Availability,
 ) AvailabilityDTO {
-    // Convert the bitmask days back into a slice
-    days := make([]int32, 0)
-    for i := 0; i < 7; i++ {
-        if avail.Days&(1<<i) != 0 {
-            days = append(days, int32(6-i))
-        }
-    }
-    // Convert time-of-day slice to "HH:MM" strings
-    hours := make([]string, 0, len(avail.Hours))
-    for _, h := range avail.Hours {
-        hours = append(hours, fmt.Sprintf("%02d:%02d", h.Hour, h.Minute))
-    }
-    // Convert price (int32) to string with decimals
-    price := fmt.Sprintf("%d.%02d", avail.Price/100, avail.Price%100)
+	// Convert the bitmask days back into a slice
+	days := make([]int32, 0)
+	for i := 0; i < 7; i++ {
+		if avail.Days&(1<<i) != 0 {
+			days = append(days, int32(6-i))
+		}
+	}
+	// Convert time-of-day slice to "HH:MM" strings
+	hours := make([]string, 0, len(avail.Hours))
+	for _, h := range avail.Hours {
+		hours = append(hours, fmt.Sprintf("%02d:%02d", h.Hour, h.Minute))
+	}
+	// Convert price (int32) to string with decimals
+	price := fmt.Sprintf("%d.%02d", avail.Price/100, avail.Price%100)
 
-    return AvailabilityDTO{
-        AvailabilityID:  avail.ID.String(),
-        StartDate:       avail.StartDate.Format("2006-01-02"),
-        EndDate:         avail.EndDate.Format("2006-01-02"),
-        Days:            days,
-        Hours:           hours,
-        Price:           price,
-        MaxParticipants: avail.MaxParticipants,
+	return AvailabilityDTO{
+		AvailabilityID:  avail.ID.String(),
+		StartDate:       avail.StartDate.Format("2006-01-02"),
+		EndDate:         avail.EndDate.Format("2006-01-02"),
+		Days:            days,
+		Hours:           hours,
+		Price:           price,
+		MaxParticipants: avail.MaxParticipants,
 		Duration:        int32(avail.Duration.Minutes()),
-        Precedance:      avail.Precedance,
-        Notes:           avail.Notes,
-    }
+		Precedance:      avail.Precedance,
+		Notes:           avail.Notes,
+	}
 }
-
-
