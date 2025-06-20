@@ -3,7 +3,6 @@ package handler
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"example.com/model"
@@ -51,27 +50,7 @@ func HoursSliceToTimeOfDaySlice(stringHours []string) ([]model.TimeOfDay, error)
 }
 
 func StringPriceToInt(strPrice string) (int, error) {
-	numSubstrings := 2
-	parts := strings.SplitN(strPrice, ".", numSubstrings)
-
-	// Handle the whole number part
-	whole := parts[0]
-	if whole == "" {
-		return 0, fmt.Errorf("Price is invalid")
-	}
-
-	// Handle the fractional (decimal) part
-	fraction := "00"
-	if len(parts) == numSubstrings {
-		raw := parts[1] + "00" // pad in case it's too short
-		fraction = raw[:2]     // truncate to exactly 2 digits
-	}
-
-	// Combine into a string like "1234"
-	combined := whole + fraction
-
-	// Convert to int
-	return strconv.Atoi(combined)
+	return strconv.Atoi(strPrice)
 }
 
 func (m *AvailabilityDTOMapper) AvailabilityDTOToAvailability(
