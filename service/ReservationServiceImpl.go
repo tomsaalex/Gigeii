@@ -144,15 +144,20 @@ func (s *ReservationServiceImpl) ReserveOrUpdate(ctx context.Context, reservatio
 
 		time.Sleep((5*time.Second))
 
-		// cream o noua rezervare
 		modelReservation.ReservationReference = uuid.New().String()
 		newReservation, err := txRepo.ReserveOrUpdate(ctx, modelReservation)
 		if err != nil {
 			tx.Rollback(ctx)
-			return nil, fmt.Errorf("failed to create reservation: %w", err)
-		}
-
+			if pgxErr, ok := err.(*pgconn.PgError); ok && pgxErr.Code == "40001" {
+				time.Sleep(50 * time.Millisecond)
+				continue
+			}
+			return nil, fmt.Errorf("failed to create reservation: %w", err)		}
+		
 		if err := tx.Commit(ctx); err != nil {
+			if pgxErr, ok := err.(*pgconn.PgError); ok {
+				fmt.Println("Commit failed, PG Error Code:", pgxErr.Code)
+			}
 			if pgxErr, ok := err.(*pgconn.PgError); ok && pgxErr.Code == "40001" {
 				time.Sleep(50 * time.Millisecond)
 				continue
