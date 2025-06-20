@@ -142,6 +142,8 @@ func (s *ReservationServiceImpl) ReserveOrUpdate(ctx context.Context, reservatio
 			return nil, fmt.Errorf("NO_AVAILABILITY: requested %d but only %d left", modelReservation.Quantity, availableSpots)
 		}
 
+		time.Sleep((5*time.Second))
+
 		// cream o noua rezervare
 		modelReservation.ReservationReference = uuid.New().String()
 		newReservation, err := txRepo.ReserveOrUpdate(ctx, modelReservation)
